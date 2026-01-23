@@ -52,8 +52,47 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["Inter"],
-        // sans: ["var(--font-sans)", ...fontFamily.sans],
+        // SF Pro - Apple's system font with Inter fallback
+        sans: [
+          "SF Pro",
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "sans-serif",
+        ],
+        // SF Pro Display - For headings and large text (20pt+)
+        display: [
+          "SF Pro Display",
+          "SF Pro",
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "sans-serif",
+        ],
+        // SF Pro Text - For body text and UI elements
+        body: [
+          "SF Pro Text",
+          "SF Pro",
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "sans-serif",
+        ],
+        mono: [
+          "SF Mono",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Monaco",
+          "Consolas",
+          "Liberation Mono",
+          "Courier New",
+          "monospace",
+        ],
       },
       keyframes: {
         "accordion-down": {

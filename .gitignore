@@ -7,7 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
 *.local
@@ -22,3 +25,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Font source files (large)
+SF-Pro.dmg
+SF-Pro-extracted/
+
+# Claude Code context files
+**/CLAUDE.md
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS files
+Thumbs.db
+*.tmp

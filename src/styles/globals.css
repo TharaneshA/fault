@@ -1,10 +1,169 @@
+/* SF Pro Display - For headings and large text */
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/SF-Pro-Display-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/SF-Pro-Display-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/SF-Pro-Display-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/SF-Pro-Display-Semibold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/SF-Pro-Display-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/SF-Pro-Display-Heavy.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("../assets/SF-Pro-Display-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* SF Pro Text - For body text and smaller sizes */
+@font-face {
+  font-family: "SF Pro Text";
+  src: url("../assets/SF-Pro-Text-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Text";
+  src: url("../assets/SF-Pro-Text-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Text";
+  src: url("../assets/SF-Pro-Text-Semibold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Text";
+  src: url("../assets/SF-Pro-Text-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* SF Pro unified - uses Text variants for body */
+@font-face {
+  font-family: "SF Pro";
+  src: url("../assets/SF-Pro-Display-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro";
+  src: url("../assets/SF-Pro-Text-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro";
+  src: url("../assets/SF-Pro-Text-Medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro";
+  src: url("../assets/SF-Pro-Text-Semibold.otf") format("opentype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro";
+  src: url("../assets/SF-Pro-Text-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro";
+  src: url("../assets/SF-Pro-Display-Heavy.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro";
+  src: url("../assets/SF-Pro-Display-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Inter fallback */
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/Inter-VariableFont_slnt,wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Inter";
-  src: url("../assets/Inter-VariableFont_slnt,wght.ttf") format("truetype");
+/* Font smoothing for crisp text rendering */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 @layer base {
@@ -39,6 +198,29 @@
     --ring: 215 20.2% 65.1%;
 
     --radius: 0.5rem;
+
+    /* App-specific colors - Light mode */
+    --app-bg: 0 0% 98%;
+    --app-bg-secondary: 0 0% 100%;
+    --app-bg-tertiary: 0 0% 96%;
+    --app-border: 0 0% 90%;
+    --app-border-light: 0 0% 92%;
+    --app-text: 0 0% 9%;
+    --app-text-secondary: 0 0% 40%;
+    --app-text-muted: 0 0% 55%;
+    --app-surface: 0 0% 100%;
+    --app-surface-hover: 0 0% 96%;
+    --app-overlay: 0 0% 0%;
+
+    /* Chart colors - Light mode */
+    --chart-grid: rgba(0, 0, 0, 0.08);
+    --chart-axis: rgba(0, 0, 0, 0.5);
+    --chart-axis-secondary: rgba(0, 0, 0, 0.3);
+    --chart-cursor: rgba(0, 0, 0, 0.05);
+    --chart-tooltip-bg: rgba(255, 255, 255, 0.95);
+    --chart-tooltip-border: rgba(0, 0, 0, 0.1);
+    --chart-edge: rgba(0, 0, 0, 0.15);
+    --chart-edge-light: rgba(0, 0, 0, 0.1);
   }
 
   .dark {
@@ -72,6 +254,29 @@
     --ring: 216 34% 17%;
 
     --radius: 0.5rem;
+
+    /* App-specific colors - Dark mode */
+    --app-bg: 0 0% 4%;
+    --app-bg-secondary: 0 0% 6%;
+    --app-bg-tertiary: 0 0% 8%;
+    --app-border: 0 0% 100% / 0.05;
+    --app-border-light: 0 0% 100% / 0.1;
+    --app-text: 0 0% 100%;
+    --app-text-secondary: 0 0% 100% / 0.6;
+    --app-text-muted: 0 0% 100% / 0.4;
+    --app-surface: 0 0% 100% / 0.02;
+    --app-surface-hover: 0 0% 100% / 0.05;
+    --app-overlay: 0 0% 0%;
+
+    /* Chart colors - Dark mode */
+    --chart-grid: rgba(255, 255, 255, 0.05);
+    --chart-axis: rgba(255, 255, 255, 0.3);
+    --chart-axis-secondary: rgba(255, 255, 255, 0.2);
+    --chart-cursor: rgba(255, 255, 255, 0.03);
+    --chart-tooltip-bg: rgba(0, 0, 0, 0.9);
+    --chart-tooltip-border: rgba(255, 255, 255, 0.1);
+    --chart-edge: rgba(255, 255, 255, 0.15);
+    --chart-edge-light: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -84,5 +289,170 @@
     font-feature-settings:
       "rlig" 1,
       "calt" 1;
+  }
+}
+
+/* Splash screen animations */
+@keyframes logo-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes logo-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(249, 115, 22, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 40px rgba(249, 115, 22, 0.6));
+  }
+}
+
+@keyframes draw-line {
+  0% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes dot-pulse {
+  0%, 100% {
+    opacity: 1;
+    r: 1.5;
+  }
+  50% {
+    opacity: 0.5;
+    r: 2;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes node-appear {
+  0% {
+    opacity: 0;
+    r: 0;
+  }
+  100% {
+    opacity: 1;
+    r: 3;
+  }
+}
+
+@keyframes node-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    r: 8;
+  }
+  50% {
+    opacity: 0.6;
+    r: 12;
+  }
+}
+
+@keyframes connection-draw {
+  0% {
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dasharray: 200;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.animate-logo-pulse {
+  animation: logo-pulse 2s ease-in-out infinite;
+}
+
+.animate-logo-glow {
+  animation: logo-glow 2s ease-in-out infinite;
+}
+
+.animate-draw-line {
+  animation: draw-line 1s ease-out forwards;
+  animation-delay: 0.3s;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+.animate-dot-pulse {
+  animation: dot-pulse 1.5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-ripple {
+  animation: ripple 2s ease-out infinite;
+}
+
+.animate-ripple-delayed {
+  animation: ripple 2s ease-out infinite;
+  animation-delay: 0.5s;
+}
+
+.animate-node-appear {
+  animation: node-appear 0.6s ease-out forwards;
+}
+
+.animate-node-pulse {
+  animation: node-pulse 3s ease-in-out infinite;
+}
+
+.animate-connection-draw {
+  animation: connection-draw 1s ease-out forwards;
+}
+
+/* Theme-aware utility classes */
+@layer utilities {
+  .bg-app {
+    background-color: hsl(var(--app-bg));
+  }
+  .bg-app-secondary {
+    background-color: hsl(var(--app-bg-secondary));
+  }
+  .bg-app-tertiary {
+    background-color: hsl(var(--app-bg-tertiary));
+  }
+  .bg-app-surface {
+    background-color: hsl(var(--app-surface));
+  }
+  .bg-app-surface-hover:hover {
+    background-color: hsl(var(--app-surface-hover));
+  }
+  .border-app {
+    border-color: hsl(var(--app-border));
+  }
+  .border-app-light {
+    border-color: hsl(var(--app-border-light));
+  }
+  .text-app {
+    color: hsl(var(--app-text));
+  }
+  .text-app-secondary {
+    color: hsl(var(--app-text-secondary));
+  }
+  .text-app-muted {
+    color: hsl(var(--app-text-muted));
   }
 }

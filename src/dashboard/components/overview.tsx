@@ -1,77 +1,76 @@
-"use client"
-
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts"
 
 const data = [
-  {
-    name: "Jan",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Feb",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Mar",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Apr",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "May",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jun",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jul",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Aug",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Sep",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Oct",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Nov",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Dec",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
+  { name: "CPU Stress", cmea: 92, ingd: 88, ccre: 85 },
+  { name: "Memory Leak", cmea: 85, ingd: 91, ccre: 82 },
+  { name: "Network Delay", cmea: 78, ingd: 89, ccre: 86 },
+  { name: "Pod Failure", cmea: 88, ingd: 84, ccre: 90 },
 ]
 
 export function Overview() {
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={data}>
+    <ResponsiveContainer width="100%" height={220}>
+      <BarChart data={data} barGap={2} barSize={16}>
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke="rgba(255,255,255,0.05)"
+          vertical={false}
+        />
         <XAxis
           dataKey="name"
-          stroke="#888888"
-          fontSize={12}
+          stroke="rgba(255,255,255,0.3)"
+          fontSize={11}
           tickLine={false}
           axisLine={false}
+          dy={8}
         />
         <YAxis
-          stroke="#888888"
-          fontSize={12}
+          stroke="rgba(255,255,255,0.3)"
+          fontSize={11}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `$${value}`}
+          domain={[60, 100]}
+          tickFormatter={(value) => `${value}%`}
+          dx={-4}
         />
-        <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
+        <Tooltip
+          cursor={{ fill: "rgba(255,255,255,0.03)" }}
+          contentStyle={{
+            backgroundColor: "rgba(0,0,0,0.9)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "6px",
+            fontSize: "12px",
+            padding: "8px 12px",
+          }}
+          labelStyle={{ color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}
+          formatter={(value: number) => [`${value}%`, ""]}
+        />
+        <Bar
+          dataKey="cmea"
+          fill="#10b981"
+          radius={[3, 3, 0, 0]}
+          name="CMEA"
+        />
+        <Bar
+          dataKey="ingd"
+          fill="#3b82f6"
+          radius={[3, 3, 0, 0]}
+          name="INGD"
+        />
+        <Bar
+          dataKey="ccre"
+          fill="#8b5cf6"
+          radius={[3, 3, 0, 0]}
+          name="CCRE"
+        />
       </BarChart>
     </ResponsiveContainer>
   )

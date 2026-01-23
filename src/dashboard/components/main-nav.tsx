@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom"
 import { cn } from "@/lib/utils"
 
 export function MainNav({
@@ -9,30 +10,61 @@ export function MainNav({
       className={cn("flex items-center space-x-4 lg:space-x-6", className)}
       {...props}
     >
-      <a
-        href="/examples/dashboard"
-        className="text-sm font-medium transition-colors hover:text-primary"
+      <NavLink
+        to="/dashboard"
+        className={({ isActive }) =>
+          cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            isActive ? "text-foreground" : "text-muted-foreground"
+          )
+        }
       >
-        Overview
-      </a>
-      <a
-        href="/examples/dashboard"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        Dashboard
+      </NavLink>
+      <NavLink
+        to="/cases"
+        className={({ isActive }) =>
+          cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            isActive ? "text-foreground" : "text-muted-foreground"
+          )
+        }
       >
-        Customers
-      </a>
-      <a
-        href="/examples/dashboard"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        Cases
+      </NavLink>
+      <NavLink
+        to="/analysis"
+        className={({ isActive }) =>
+          cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            isActive ? "text-foreground" : "text-muted-foreground"
+          )
+        }
       >
-        Products
-      </a>
-      <a
-        href="/examples/dashboard"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        Analysis
+      </NavLink>
+      <NavLink
+        to="/comparison"
+        className={({ isActive }) =>
+          cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            isActive ? "text-foreground" : "text-muted-foreground"
+          )
+        }
+      >
+        Comparison
+      </NavLink>
+      <NavLink
+        to="/settings"
+        className={({ isActive }) =>
+          cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            isActive ? "text-foreground" : "text-muted-foreground"
+          )
+        }
       >
         Settings
-      </a>
+      </NavLink>
     </nav>
   )
 }

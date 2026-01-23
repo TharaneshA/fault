@@ -1,191 +1,191 @@
-
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-import { CalendarDateRangePicker } from "@/dashboard/components/date-range-picker"
-import { MainNav } from "@/dashboard/components/main-nav"
 import { Overview } from "@/dashboard/components/overview"
-import { RecentSales } from "@/dashboard/components/recent-sales"
-import { Search } from "@/dashboard/components/search"
-import TeamSwitcher from "@/dashboard/components/team-switcher"
-import { UserNav } from "@/dashboard/components/user-nav"
+import { RecentCases } from "@/dashboard/components/recent-cases"
+import {
+  TrendingUp,
+  Activity,
+  Zap,
+  Clock,
+  ArrowUpRight,
+  ArrowDownRight,
+} from "lucide-react"
 
+function StatItem({
+  label,
+  value,
+  trend,
+  trendUp,
+}: {
+  label: string
+  value: string
+  trend?: string
+  trendUp?: boolean
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-app-muted">
+        {label}
+      </p>
+      <div className="flex items-baseline gap-2">
+        <span className="text-2xl font-black tabular-nums tracking-normal text-app">
+          {value}
+        </span>
+        {trend && (
+          <span
+            className={`flex items-center text-xs font-medium ${trendUp ? "text-emerald-500" : "text-red-500"}`}
+          >
+            {trendUp ? (
+              <ArrowUpRight className="h-3 w-3" />
+            ) : (
+              <ArrowDownRight className="h-3 w-3" />
+            )}
+            {trend}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function DashboardPage() {
   return (
-    <>
-      <div className="flex-col md:flex">
-        <div className="border-b">
-          <div className="flex h-16 items-center px-4">
-            <TeamSwitcher />
-            <MainNav className="mx-6" />
-            <div className="ml-auto flex items-center space-x-4">
-              <Search />
-              <UserNav />
+    <div className="min-h-full p-6">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="font-display text-xl font-black tracking-normal text-app">Overview</h1>
+        <p className="text-[13px] text-app-secondary">
+          Multi-modal root cause analysis performance
+        </p>
+      </div>
+
+      {/* Stats Row */}
+      <div className="mb-8 flex items-center gap-8 border-b border-app pb-6">
+        <StatItem label="Total Cases" value="270" />
+        <div className="h-8 w-px bg-app-tertiary" />
+        <StatItem label="Analyzed" value="264" trend="+12" trendUp />
+        <div className="h-8 w-px bg-app-tertiary" />
+        <StatItem label="Top@1 Accuracy" value="89.3%" trend="+4.1%" trendUp />
+        <div className="h-8 w-px bg-app-tertiary" />
+        <StatItem label="Avg. Time" value="2.3s" trend="-0.8s" trendUp />
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Chart Section */}
+        <div className="lg:col-span-3">
+          <div className="rounded-lg border border-app bg-app-surface">
+            <div className="flex items-center justify-between border-b border-app px-4 py-3">
+              <h2 className="text-[13px] font-semibold text-app">Accuracy by Fault Type</h2>
+              <div className="flex items-center gap-4 text-[11px] text-app-muted">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  CMEA
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  INGD
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-violet-500" />
+                  CCRE
+                </span>
+              </div>
+            </div>
+            <div className="p-4">
+              <Overview />
+            </div>
+          </div>
+
+          {/* Component Contribution */}
+          <div className="mt-6 rounded-lg border border-app bg-app-surface">
+            <div className="border-b border-app px-4 py-3">
+              <h2 className="text-[13px] font-semibold text-app">Component Contribution</h2>
+            </div>
+            <div className="space-y-3 p-4">
+              <ContributionBar label="CMEA" sublabel="Metrics" value={42} color="bg-blue-500" />
+              <ContributionBar label="INGD" sublabel="Traces" value={35} color="bg-emerald-500" />
+              <ContributionBar label="CCRE" sublabel="Logs + LLM" value={23} color="bg-violet-500" />
             </div>
           </div>
         </div>
-        <div className="flex-1 space-y-4 p-8 pt-6">
-          <div className="flex items-center justify-between space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-            <div className="flex items-center space-x-2">
-              <CalendarDateRangePicker />
-              <Button>Download</Button>
+
+        {/* Recent Cases */}
+        <div className="lg:col-span-2">
+          <div className="rounded-lg border border-app bg-app-surface">
+            <div className="flex items-center justify-between border-b border-app px-4 py-3">
+              <h2 className="text-[13px] font-semibold text-app">Recent Cases</h2>
+              <button className="text-[11px] text-app-muted hover:text-app-secondary">
+                View all
+              </button>
+            </div>
+            <div className="p-2">
+              <RecentCases />
             </div>
           </div>
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="analytics" disabled>
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="reports" disabled>
-                Reports
-              </TabsTrigger>
-              <TabsTrigger value="notifications" disabled>
-                Notifications
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="overview" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Revenue
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="h-4 w-4 text-muted-foreground"
-                    >
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">$45,231.89</div>
-                    <p className="text-xs text-muted-foreground">
-                      +20.1% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Subscriptions
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="h-4 w-4 text-muted-foreground"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+2350</div>
-                    <p className="text-xs text-muted-foreground">
-                      +180.1% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="h-4 w-4 text-muted-foreground"
-                    >
-                      <rect width="20" height="14" x="2" y="5" rx="2" />
-                      <path d="M2 10h20" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+12,234</div>
-                    <p className="text-xs text-muted-foreground">
-                      +19% from last month
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Active Now
-                    </CardTitle>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      className="h-4 w-4 text-muted-foreground"
-                    >
-                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                    </svg>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">+573</div>
-                    <p className="text-xs text-muted-foreground">
-                      +201 since last hour
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
-                  <CardHeader>
-                    <CardTitle>Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                    <Overview />
-                  </CardContent>
-                </Card>
-                <Card className="col-span-3">
-                  <CardHeader>
-                    <CardTitle>Recent Sales</CardTitle>
-                    <CardDescription>
-                      You made 265 sales this month.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RecentSales />
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+
+          {/* Dataset Stats */}
+          <div className="mt-6 rounded-lg border border-app bg-app-surface">
+            <div className="border-b border-app px-4 py-3">
+              <h2 className="text-[13px] font-semibold text-app">Dataset Statistics</h2>
+            </div>
+            <div className="divide-y divide-app">
+              <DatasetRow name="GAIA (D1)" system="Train-Ticket" count={135} accuracy={91.2} />
+              <DatasetRow name="GAIA (D2)" system="Train-Ticket" count={135} accuracy={87.4} />
+              <DatasetRow name="RCAEval" system="Various" count={180} accuracy={84.8} />
+            </div>
+          </div>
         </div>
       </div>
-    </>
+    </div>
+  )
+}
+
+function ContributionBar({
+  label,
+  sublabel,
+  value,
+  color,
+}: {
+  label: string
+  sublabel: string
+  value: number
+  color: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[12px]">
+        <span className="font-medium text-app">
+          {label} <span className="text-app-muted">({sublabel})</span>
+        </span>
+        <span className="tabular-nums text-app-secondary">{value}%</span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-app-tertiary">
+        <div className={`h-full ${color}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  )
+}
+
+function DatasetRow({
+  name,
+  system,
+  count,
+  accuracy,
+}: {
+  name: string
+  system: string
+  count: number
+  accuracy: number
+}) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2.5">
+      <div>
+        <p className="text-[13px] font-medium text-app">{name}</p>
+        <p className="text-[11px] text-app-muted">{system}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-[13px] font-medium tabular-nums text-app">{count}</p>
+        <p className="text-[11px] tabular-nums text-emerald-500">{accuracy}%</p>
+      </div>
+    </div>
   )
 }
