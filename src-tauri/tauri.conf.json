@@ -47,7 +47,7 @@
         "release": "1"
       }
     },
-    "externalBin": [],
+    "externalBin": ["binaries/fault-backend"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -55,7 +55,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "longDescription": "",
+    "longDescription": "Multi-modal root cause analysis for microservice systems",
     "macOS": {
       "entitlements": null,
       "exceptionDomain": "",
@@ -64,7 +64,7 @@
       "signingIdentity": null
     },
     "resources": [],
-    "shortDescription": "",
+    "shortDescription": "AI-powered root cause analysis",
     "targets": "all",
     "windows": {
       "certificateThumbprint": null,

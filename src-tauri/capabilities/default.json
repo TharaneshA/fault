@@ -20,6 +20,12 @@
     "core:menu:default",
     "core:tray:default",
     "shell:allow-open",
+    "shell:allow-spawn",
+    "shell:allow-execute",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [{ "name": "binaries/fault-backend", "sidecar": true }]
+    },
     "os:default"
   ]
 }

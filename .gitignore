@@ -30,8 +30,23 @@ dist-ssr
 SF-Pro.dmg
 SF-Pro-extracted/
 
-# Claude Code context files
+# Claude Code
 **/CLAUDE.md
+.claude/
+
+# Tauri
+src-tauri/target/
+src-tauri/binaries/*.exe
+src-tauri/gen/schemas/
+
+# Python backend
+backend/.venv/
+backend/build/
+backend/dist/
+backend/__pycache__/
+backend/logs/
+**/__pycache__/
+*.pyc
 
 # Environment files
 .env

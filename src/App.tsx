@@ -7,6 +7,7 @@ import { AboutDialog } from "@/components/about-dialog"
 import { SplashScreen } from "@/components/splash-screen"
 import { TailwindIndicator } from "./components/tailwind-indicator"
 import { ThemeProvider } from "./components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 import DashboardPage from "./dashboard/page"
 import CasesPage from "./pages/cases/page"
 import AnalysisPage from "./pages/analysis/page"
@@ -116,6 +117,9 @@ function App() {
           <SplashScreen onComplete={handleSplashComplete} duration={2500} />
         </div>
       )}
+
+      {/* Toast notifications */}
+      <Toaster />
 
       <TailwindIndicator />
     </ThemeProvider>

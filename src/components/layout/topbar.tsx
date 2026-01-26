@@ -7,6 +7,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { Tooltip } from "@/components/ui/tooltip-simple"
+import { BackendStatusIndicator } from "./backend-status"
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Overview",
@@ -129,6 +130,12 @@ export function Topbar({ onOpenCommandPalette, onOpenAbout }: TopbarProps) {
 
       {/* Right: Actions + Window controls */}
       <div className="flex items-center gap-0.5 pr-1">
+        {/* Backend Status Indicator */}
+        <BackendStatusIndicator />
+
+        {/* Separator */}
+        <div className="mx-1 h-4 w-px bg-app-tertiary" />
+
         <Tooltip content={theme === "dark" ? "Light mode" : "Dark mode"}>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
