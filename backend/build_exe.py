@@ -31,6 +31,9 @@ def build():
         print("Installing PyInstaller...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
 
+    import os
+    SEP = os.pathsep
+    
     # PyInstaller command
     cmd = [
         sys.executable, "-m", "PyInstaller",
@@ -61,13 +64,13 @@ def build():
         "--hidden-import", "sklearn",
         "--hidden-import", "loguru",
         # Add all backend source files
-        "--add-data", f"{BACKEND_DIR / 'main.py'};.",
-        "--add-data", f"{BACKEND_DIR / 'config.py'};.",
-        "--add-data", f"{BACKEND_DIR / 'api'};api",
-        "--add-data", f"{BACKEND_DIR / 'data'};data",
-        "--add-data", f"{BACKEND_DIR / 'ingd'};ingd",
+        "--add-data", f"{BACKEND_DIR / 'main.py'}{SEP}.",
+        "--add-data", f"{BACKEND_DIR / 'config.py'}{SEP}.",
+        "--add-data", f"{BACKEND_DIR / 'api'}{SEP}api",
+        "--add-data", f"{BACKEND_DIR / 'data'}{SEP}data",
+        "--add-data", f"{BACKEND_DIR / 'ingd'}{SEP}ingd",
         # Add pretrained weights
-        "--add-data", f"{BACKEND_DIR / 'weights'};weights",
+        "--add-data", f"{BACKEND_DIR / 'weights'}{SEP}weights",
         str(BACKEND_DIR / "run_server.py"),  # Entry point
     ]
 
@@ -80,13 +83,28 @@ def build():
         return False
 
     # Copy to Tauri binaries folder
-    exe_path = BACKEND_DIR / "dist" / "fault-backend.exe"
+    import platform
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    
+    # Determine OS-specific extension and name
+    exe_name = "fault-backend.exe" if system == "windows" else "fault-backend"
+    exe_path = BACKEND_DIR / "dist" / exe_name
+
     if exe_path.exists():
         TAURI_BINARIES.mkdir(parents=True, exist_ok=True)
 
-        # Tauri expects the format: name-target_triple.exe
-        # For Windows x64: fault-backend-x86_64-pc-windows-msvc.exe
-        target_name = "fault-backend-x86_64-pc-windows-msvc.exe"
+        # Determine Tauri target triple
+        if system == "windows":
+            triple = "x86_64-pc-windows-msvc"
+        elif system == "darwin":
+            triple = "aarch64-apple-darwin" if machine in ["arm64", "aarch64"] else "x86_64-apple-darwin"
+        elif system == "linux":
+            triple = "x86_64-unknown-linux-gnu"
+        else:
+            triple = "unknown"
+
+        target_name = f"fault-backend-{triple}.exe" if system == "windows" else f"fault-backend-{triple}"
         target_path = TAURI_BINARIES / target_name
 
         shutil.copy2(exe_path, target_path)
