@@ -20,12 +20,15 @@ import {
   Filter,
   ArrowUpDown,
   Search,
+  Loader2,
+  AlertOctagon,
 } from "lucide-react"
 import { CausalGraph } from "./components/causal-graph"
 import { TopologyView } from "./components/topology-view"
 import { TimelineView } from "./components/timeline-view"
 import { ExplanationView } from "./components/explanation-view"
 import { SlidePanel } from "@/components/ui/slide-panel"
+import { analyzeDataset, type AnalysisResult, type CausalGraph as CausalGraphData } from "@/lib/api"
 
 const analysisData = {
   id: "RE2-047",
@@ -77,6 +80,92 @@ export default function AnalysisPage() {
   const [isAffectedPanelOpen, setIsAffectedPanelOpen] = useState(false)
   const [highlightedService, setHighlightedService] = useState<string | null>(null)
 
+  // Backend integration state
+  const isLiveCase = caseId?.startsWith("LIVE-") ?? false
+  const [liveResult, setLiveResult] = useState<AnalysisResult | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [analysisTime, setAnalysisTime] = useState<number | null>(null)
+
+  // Fetch from backend when navigating to a live case
+  useEffect(() => {
+    if (!isLiveCase) return
+    let cancelled = false
+    setIsLoading(true)
+    setLoadError(null)
+    const start = performance.now()
+
+    analyzeDataset("synthetic", "default", 5)
+      .then((result) => {
+        if (cancelled) return
+        setLiveResult(result)
+        setAnalysisTime(Math.round(performance.now() - start))
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setLoadError(err.message || "Failed to connect to backend")
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [isLiveCase])
+
+  // Transform backend data into UI format
+  const currentAnalysis = useMemo(() => {
+    if (!isLiveCase || !liveResult) {
+      return { data: analysisData, services: affectedServicesList, causalGraphData: undefined }
+    }
+
+    const rc = liveResult.root_causes
+    const topCause = rc[0]
+    const faultLabel = liveResult.metadata.fault_type
+      ? liveResult.metadata.fault_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : "Unknown"
+
+    const data = {
+      id: caseId || "LIVE-001",
+      service: liveResult.metadata.ground_truth || topCause?.node_name || "unknown",
+      faultType: faultLabel,
+      timestamp: new Date().toLocaleString(),
+      duration: analysisTime ? `${(analysisTime / 1000).toFixed(1)}s` : "—",
+      rootCauses: rc.map((r) => ({
+        service: r.node_name,
+        confidence: r.confidence,
+        rank: r.rank,
+      })),
+      affectedServices: rc.length,
+      totalNodes: liveResult.causal_graph.nodes.length,
+    }
+
+    const statusOrder: ServiceStatus[] = ["critical", "error", "warning", "degraded"]
+    const services: AffectedService[] = rc.map((r, i) => ({
+      name: r.node_name,
+      status: statusOrder[Math.min(i, statusOrder.length - 1)],
+      latency: `+${Math.round(r.anomaly_score * 100)}%`,
+      errors: Math.round(r.cascade_score * 50),
+      type: i === 0 ? "Root Cause" : "Downstream",
+    }))
+
+    // Add more affected services from the causal graph (direct neighbors of root cause)
+    if (topCause?.details?.affects) {
+      for (const aff of topCause.details.affects.slice(0, 7)) {
+        if (!services.find((s) => s.name === aff.name)) {
+          services.push({
+            name: aff.name,
+            status: aff.strength > 0.5 ? "warning" : "degraded",
+            latency: `+${Math.round(aff.strength * 100)}%`,
+            errors: 0,
+            type: "Downstream",
+          })
+        }
+      }
+    }
+
+    return { data, services, causalGraphData: liveResult.causal_graph as CausalGraphData }
+  }, [isLiveCase, liveResult, caseId, analysisTime])
+
   // Clear highlight after 2 seconds
   useEffect(() => {
     if (highlightedService) {
@@ -127,6 +216,46 @@ export default function AnalysisPage() {
     setIsTracesOpen(true)
   }, [])
 
+  const displayData = currentAnalysis.data
+  const displayServices = currentAnalysis.services
+
+  // Loading state for live cases
+  if (isLiveCase && isLoading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <div className="text-center">
+          <p className="text-[14px] font-medium text-app">Running INGD Analysis...</p>
+          <p className="text-[12px] text-app-muted mt-1">
+            Analyzing synthetic dataset through Neural Granger causal discovery
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state for live cases
+  if (isLiveCase && loadError) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4">
+        <AlertOctagon className="h-8 w-8 text-red-500" />
+        <div className="text-center">
+          <p className="text-[14px] font-medium text-app">Backend Error</p>
+          <p className="text-[12px] text-app-muted mt-1">{loadError}</p>
+          <p className="text-[11px] text-app-muted mt-0.5">
+            Make sure the backend is running on port 8765
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/cases")}
+          className="mt-2 rounded-md bg-app-tertiary px-4 py-2 text-[12px] font-medium text-app-secondary transition-colors hover:text-app"
+        >
+          Back to Cases
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -142,14 +271,19 @@ export default function AnalysisPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-display text-xl font-black tracking-normal text-app">
-                  {caseId || analysisData.id}
+                  {caseId || displayData.id}
                 </h1>
+                {isLiveCase && (
+                  <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-500">
+                    LIVE
+                  </span>
+                )}
                 <span className="rounded bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-medium text-orange-500">
-                  {analysisData.faultType}
+                  {displayData.faultType}
                 </span>
               </div>
               <p className="text-[12px] text-app-muted">
-                {analysisData.service} · {analysisData.timestamp}
+                {displayData.service} · {displayData.timestamp}
               </p>
             </div>
           </div>
@@ -171,10 +305,10 @@ export default function AnalysisPage() {
             <Cpu className="h-3.5 w-3.5 text-emerald-500" />
             Root cause:{" "}
             <span className="font-mono font-medium text-app">
-              {analysisData.rootCauses[0].service}
+              {displayData.rootCauses[0].service}
             </span>
             <span className="text-emerald-500">
-              ({(analysisData.rootCauses[0].confidence * 100).toFixed(0)}%)
+              ({(displayData.rootCauses[0].confidence * 100).toFixed(0)}%)
             </span>
           </span>
           <button
@@ -182,13 +316,13 @@ export default function AnalysisPage() {
             className="flex items-center gap-1.5 text-app-muted transition-colors hover:text-app-secondary group"
           >
             <GitBranch className="h-3.5 w-3.5" />
-            <span className="font-medium text-app">{analysisData.affectedServices}</span>{" "}
+            <span className="font-medium text-app">{displayData.affectedServices}</span>{" "}
             <span className="underline decoration-dotted underline-offset-2">affected services</span>
             <ChevronRight className="h-3 w-3 opacity-0 -ml-1 transition-all group-hover:opacity-100 group-hover:ml-0" />
           </button>
           <span className="flex items-center gap-1.5 text-app-muted">
             <Clock className="h-3.5 w-3.5" />
-            {analysisData.duration} processing
+            {displayData.duration} processing
           </span>
         </div>
 
@@ -216,10 +350,10 @@ export default function AnalysisPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {activeTab === "overview" && <OverviewContent data={analysisData} />}
+        {activeTab === "overview" && <OverviewContent data={displayData} />}
         {activeTab === "graph" && (
           <div className="h-full p-6">
-            <CausalGraph highlightedService={highlightedService} />
+            <CausalGraph highlightedService={highlightedService} backendData={currentAnalysis.causalGraphData} rootCauses={displayData.rootCauses} />
           </div>
         )}
         {activeTab === "topology" && (
@@ -253,7 +387,7 @@ export default function AnalysisPage() {
       <AffectedServicesPanel
         isOpen={isAffectedPanelOpen}
         onClose={() => setIsAffectedPanelOpen(false)}
-        services={affectedServicesList}
+        services={displayServices}
         onFocusInGraph={handleFocusInGraph}
         onViewTopology={handleViewInTopology}
         onViewTimeline={handleViewTimeline}

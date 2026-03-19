@@ -1,0 +1,228 @@
+  Your Project: Based on DiagFusion
+
+  What DiagFusion Does (Base Paper)
+
+  DiagFusion solves two tasks for microservice failure diagnosis:
+  1. Task #1: Root Cause Instance Localization (which service instance caused the failure?)
+  2. Task #2: Failure Type Determination (what type of failure is it?)
+
+  DiagFusion's Pipeline:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                         DiagFusion Architecture                         │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  STEP 1: Event Extraction                                               │
+  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
+  │  │   Metrics    │  │    Logs      │  │   Traces     │                  │
+  │  │  (3-sigma    │  │  (Drain      │  │  (3-sigma    │                  │
+  │  │   anomaly)   │  │   parsing)   │  │   + status)  │                  │
+  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                  │
+  │         │                 │                 │                           │
+  │         └────────────┬────┴─────────────────┘                           │
+  │                      ▼                                                  │
+  │  STEP 2: Event Serialization (by timestamp + instance-id)              │
+  │         Events become sequences: [e1, e2, e3, ...]                     │
+  │                      │                                                  │
+  │                      ▼                                                  │
+  │  STEP 3: FastText Embedding                                            │
+  │         Events → Vectors (unified representation)                      │
+  │                      │                                                  │
+  │                      ▼                                                  │
+  │  STEP 4: Dependency Graph + GNN                                        │
+  │         Learn failure propagation patterns                             │
+  │                      │                                                  │
+  │                      ▼                                                  │
+  │  OUTPUT: Root Cause Instance + Failure Type                            │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  DiagFusion's Limitations (Gaps We Address)
+  ┌───────────────────────────┬────────────────────────────────────┬────────────────────────────────────────────────────────────────────────┐
+  │        Limitation         │        What DiagFusion Does        │                                Problem                                 │
+  ├───────────────────────────┼────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ Simple Fusion             │ Concatenates events, uses fastText │ Doesn't capture cross-modal correlations or modality-specific patterns │
+  ├───────────────────────────┼────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ No Causal Discovery       │ GNN learns patterns, not causality │ Can't explain causal relationships between services                    │
+  ├───────────────────────────┼────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ No Interpretability       │ Black-box neural network output    │ Operators don't know WHY a service is blamed                           │
+  ├───────────────────────────┼────────────────────────────────────┼────────────────────────────────────────────────────────────────────────┤
+  │ No Confidence Calibration │ Raw softmax probabilities          │ Can't trust the confidence scores in production                        │
+  └───────────────────────────┴────────────────────────────────────┴────────────────────────────────────────────────────────────────────────┘
+  ---
+  What We're Building: Enhanced DiagFusion
+
+  We extend DiagFusion with 3 novel contributions that address these gaps:
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │                    OUR ENHANCED ARCHITECTURE                             │
+  ├──────────────────────────────────────────────────────────────────────────┤
+  │                                                                          │
+  │  Metrics ──┐                                                             │
+  │  Logs ─────┼─► Event Extraction (same as DiagFusion)                    │
+  │  Traces ───┘           │                                                 │
+  │                        ▼                                                 │
+  │  ┌────────────────────────────────────────────────────────────────────┐ │
+  │  │     MEMBER A: CMEA (Contrastive Multi-Modal Event Alignment)       │ │
+  │  │                                                                    │ │
+  │  │  REPLACES: DiagFusion's simple fastText embedding                  │ │
+  │  │                                                                    │ │
+  │  │  NEW: Factorized Contrastive Learning (from FOCAL paper)           │ │
+  │  │       ├── Shared representations (cross-modal patterns)            │ │
+  │  │       ├── Modality-specific representations (unique signals)       │ │
+  │  │       └── Temporal alignment mechanism                             │ │
+  │  └────────────────────────────────────────────────────────────────────┘ │
+  │                        │                                                 │
+  │                        ▼                                                 │
+  │  ┌────────────────────────────────────────────────────────────────────┐ │
+  │  │     MEMBER B: INGD (Interpretable Neural Granger Discovery)        │ │
+  │  │                                                                    │ │
+  │  │  REPLACES: DiagFusion's GNN (pattern learning only)                │ │
+  │  │                                                                    │ │
+  │  │  NEW: Neural Granger Causal Discovery (from RUN paper)             │ │
+  │  │       + Multi-kernel convolution (from CausalFormer)               │ │
+  │  │       + Interpretability layer (regression relevance propagation)  │ │
+  │  │                                                                    │ │
+  │  │  OUTPUT: Causal graph with EXPLAINED edge weights                  │ │
+  │  └────────────────────────────────────────────────────────────────────┘ │
+  │                        │                                                 │
+  │                        ▼                                                 │
+  │  ┌────────────────────────────────────────────────────────────────────┐ │
+  │  │     MEMBER C: CCRE (Calibrated Causal Ranking with Explanations)   │ │
+  │  │                                                                    │ │
+  │  │  REPLACES: DiagFusion's simple GNN output layer                    │ │
+  │  │                                                                    │ │
+  │  │  NEW: Personalized PageRank (from RUN paper)                       │ │
+  │  │       + Confidence calibration (temperature scaling)               │ │
+  │  │       + Natural language explanation generation                    │ │
+  │  │                                                                    │ │
+  │  │  OUTPUT: Ranked root causes + calibrated confidence + explanations │ │
+  │  └────────────────────────────────────────────────────────────────────┘ │
+  │                                                                          │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Detailed Explanation with Literature References
+
+  Member A: CMEA - Contrastive Multi-Modal Event Alignment
+
+  What DiagFusion does (Section 4.2, Page 4-5):
+  - Extracts events from metrics (3-sigma), logs (Drain parsing), traces (status codes)
+  - Serializes events by timestamp
+  - Uses fastText to embed all events into a unified vector space
+  - Problem: Treats all modalities equally, misses cross-modal correlations
+
+  What we change (based on FOCAL, NeurIPS 2023):
+  # DiagFusion's approach (simple):
+  event_embedding = fastText(event_sequence)
+
+  # Our CMEA approach:
+  shared_repr = contrastive_encoder(event_sequence)      # What's common across modalities
+  metric_specific = metric_encoder(metric_events)        # Unique metric patterns
+  log_specific = log_encoder(log_events)                 # Unique log patterns
+  trace_specific = trace_encoder(trace_events)           # Unique trace patterns
+
+  final_embedding = fusion(shared_repr, metric_specific, log_specific, trace_specific)
+
+  Why this is better (literature support):
+  - FOCAL (NeurIPS 2023) shows factorized representations capture both shared and unique information
+  - MULAN (WWW 2024) demonstrates contrastive learning improves multi-modal alignment
+  - Nezha (ESEC/FSE 2023) shows event transformation is effective but doesn't exploit cross-modal patterns
+
+  ---
+  Member B: INGD - Interpretable Neural Granger with Decomposition
+
+  What DiagFusion does (Section 4.3, Page 5-6):
+  - Builds dependency graph from traces + deployment data
+  - Uses GNN (topology adaptive graph convolution) to learn propagation patterns
+  - Problem: No causal discovery - just learns correlations, not causation. No interpretability - can't explain why edges exist.
+
+  What we change (based on RUN + CausalFormer):
+  # DiagFusion's approach:
+  node_features = GNN(dependency_graph, event_embeddings)
+  # Problem: Learns patterns, not causality. No explanation.
+
+  # Our INGD approach:
+  # Step 1: Neural Granger Causal Discovery (from RUN, AAAI 2024)
+  causal_matrix = neural_granger(event_sequences)  # Discovers causal relationships
+
+  # Step 2: Multi-kernel convolution (from CausalFormer, IEEE TKDE 2024)
+  multi_scale_features = multi_kernel_conv(causal_matrix)  # Captures multi-scale patterns
+
+  # Step 3: Interpretability layer (from CausalFormer)
+  edge_explanations = relevance_propagation(causal_matrix)  # Explains each edge
+
+  Why this is better (literature support):
+  - RUN (AAAI 2024) shows Neural Granger outperforms PC-algorithm for microservice RCA
+  - CausalFormer (IEEE TKDE 2024) shows regression relevance propagation provides interpretable causal explanations
+  - Nezha uses event graphs but no causal discovery mechanism
+
+  ---
+  Member C: CCRE - Calibrated Causal Ranking with Explanations
+
+  What DiagFusion does (Section 4.4.2, Page 6):
+  - Uses MaxPooling + fully connected layer for classification
+  - Ranks instances by event sequence length within service group
+  - Problem: No confidence calibration - softmax outputs are overconfident. No explanations - just outputs a ranked list.
+
+  What we change (based on RUN + calibration literature):
+  # DiagFusion's approach:
+  service_group = GNN_output.argmax()  # Which service group?
+  root_cause = max(instances_in_group, key=len(events))  # Rank by event count
+  confidence = softmax(logits)  # Uncalibrated!
+
+  # Our CCRE approach:
+  # Step 1: Personalized PageRank (from RUN, AAAI 2024)
+  rankings = personalized_pagerank(causal_graph, start=anomaly_node)
+
+  # Step 2: Confidence Calibration
+  calibrated_confidence = temperature_scaling(rankings, temperature=T)
+  # Now confidence scores are well-calibrated (reliable!)
+
+  # Step 3: Explanation Generation
+  explanation = generate_explanation(
+      root_cause=top_ranked,
+      propagation_path=path_from_root_to_symptoms,
+      evidence=relevant_events_per_modality
+  )
+  # Output: "Service B failed due to memory leak, propagating to C and D via API calls"
+
+  Why this is better (literature support):
+  - RUN (AAAI 2024) shows PageRank on causal graphs outperforms direct classification
+  - Calibration literature shows neural networks are typically overconfident; calibration is essential for production
+  - No existing RCA paper provides natural language explanations with calibrated confidence
+
+  ---
+  Side-by-Side Comparison
+  ┌────────────────────┬────────────────────────┬───────────────────────────────────┬───────────────────────────────┐
+  │     Component      │   DiagFusion (Base)    │          Our Enhancement          │         Source Paper          │
+  ├────────────────────┼────────────────────────┼───────────────────────────────────┼───────────────────────────────┤
+  │ Multi-modal Fusion │ FastText embedding     │ Factorized contrastive learning   │ FOCAL (NeurIPS 2023)          │
+  ├────────────────────┼────────────────────────┼───────────────────────────────────┼───────────────────────────────┤
+  │ Graph Learning     │ GNN (pattern learning) │ Neural Granger (causal discovery) │ RUN (AAAI 2024)               │
+  ├────────────────────┼────────────────────────┼───────────────────────────────────┼───────────────────────────────┤
+  │ Interpretability   │ None                   │ Relevance propagation             │ CausalFormer (IEEE TKDE 2024) │
+  ├────────────────────┼────────────────────────┼───────────────────────────────────┼───────────────────────────────┤
+  │ Ranking            │ Event count heuristic  │ Personalized PageRank             │ RUN (AAAI 2024)               │
+  ├────────────────────┼────────────────────────┼───────────────────────────────────┼───────────────────────────────┤
+  │ Confidence         │ Raw softmax            │ Temperature scaling               │ Calibration literature        │
+  ├────────────────────┼────────────────────────┼───────────────────────────────────┼───────────────────────────────┤
+  │ Explanations       │ None                   │ Path-based natural language       │ Novel contribution            │
+  └────────────────────┴────────────────────────┴───────────────────────────────────┴───────────────────────────────┘
+  ---
+  Problem Statement (Refined)
+
+  DiagFusion (IEEE TSC 2023) pioneered multimodal failure diagnosis by unifying metrics, logs, and traces through event embedding and GNN-based pattern learning. However, it faces three critical limitations that hinder its adoption in production environments:
+
+  1. Suboptimal Multi-Modal Fusion: Simple fastText embedding fails to capture temporal alignment and cross-modal correlations, losing valuable diagnostic signals.
+  2. Lack of Causal Discovery and Interpretability: The GNN learns failure propagation patterns but cannot discover causal relationships or explain why a service is identified as the root cause.
+  3. Uncalibrated Confidence and Missing Explanations: Raw neural network outputs provide no calibrated confidence for decision-making, and operators receive no actionable explanations.
+
+  We propose InterpretableRCA, extending DiagFusion with three novel contributions: (1) Contrastive Multi-Modal Event Alignment for better fusion, (2) Interpretable Neural Granger Discovery for causal explanation, and (3) Calibrated Causal Ranking with natural language explanations.
+
+  ---
+  Project Title Options
+
+  1. "InterpretableRCA: Extending DiagFusion with Causal Discovery and Calibrated Explanations for Microservice Failure Diagnosis"
+  2. "Beyond Pattern Learning: Interpretable Causal Root Cause Analysis for Microservices"
+  3. "CausalFuse: Enhancing Multi-Modal Failure Diagnosis with Interpretable Causal Discovery"

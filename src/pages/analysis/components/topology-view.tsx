@@ -19,7 +19,7 @@ import {
   Maximize2,
   Minimize2,
   Target,
-  Map,
+  Map as MapIcon,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
@@ -235,7 +235,7 @@ function TopologyControls({
               : isDark ? "text-white/50 hover:bg-white/10 hover:text-white" : "text-black/50 hover:bg-black/10 hover:text-black"
           )}
         >
-          <Map className="h-3.5 w-3.5" />
+          <MapIcon className="h-3.5 w-3.5" />
         </button>
       </Tooltip>
       <Tooltip content={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
@@ -311,6 +311,20 @@ function TopologyViewInner({ highlightedService }: TopologyViewProps) {
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((prev) => !prev)
   }, [])
+
+  // F key toggles fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "f" || e.key === "F") {
+        const tag = (e.target as HTMLElement)?.tagName
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return
+        e.preventDefault()
+        toggleFullscreen()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [toggleFullscreen])
 
   // Update edge colors when theme changes
   useEffect(() => {

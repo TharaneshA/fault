@@ -39,8 +39,9 @@ SF-Pro-extracted/
 
 # Tauri
 src-tauri/target/
-src-tauri/binaries/*.exe
 src-tauri/gen/schemas/
+# Compiled sidecar binaries (PyInstaller output)
+src-tauri/binaries/*.exe
 
 # Python backend
 backend/.venv/

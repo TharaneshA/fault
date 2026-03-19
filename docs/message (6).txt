@@ -1,0 +1,174 @@
+  Primary Sources for Your PPT Statistics
+
+  Source 1: Logz.io Observability Pulse 2024 Report (PRIMARY SOURCE)
+
+  Link: https://logz.io/observability-pulse-2024/
+  ┌──────────────────────────────────────┬────────────┬────────────────────────────────────────────┐
+  │              Statistic               │   Value    │                   Notes                    │
+  ├──────────────────────────────────────┼────────────┼────────────────────────────────────────────┤
+  │ MTTR > 1 hour                        │ 82% (2024) │ Up from 74% (2023), 64% (2022), 47% (2021) │
+  ├──────────────────────────────────────┼────────────┼────────────────────────────────────────────┤
+  │ Knowledge gaps as #1 challenge       │ 48%        │ Up from 30% in 2023                        │
+  ├──────────────────────────────────────┼────────────┼────────────────────────────────────────────┤
+  │ Full observability achieved          │ Only 10%   │                                            │
+  ├──────────────────────────────────────┼────────────┼────────────────────────────────────────────┤
+  │ Methods to reduce observability cost │ 91%        │                                            │
+  ├──────────────────────────────────────┼────────────┼────────────────────────────────────────────┤
+  │ OpenTelemetry adoption important     │ 76%        │                                            │
+  └──────────────────────────────────────┴────────────┴────────────────────────────────────────────┘
+  Methodology: 501 responses, collected late 2023 - January 2024. Respondents: Developers, DevOps Engineers, SREs, IT Managers, Directors/Executives.
+
+  Quotable snippet for your PPT:
+  "82% of respondents share that their MTTR during production incidents was over an hour. This is up from 74% in 2023, 64% in 2022, and 47% in 2021... The most common response [to observability challenges] was a lack of knowledge among the team at 48%."
+
+  ---
+  Source 2: CNCF Blog - The Challenges of Rising MTTR
+
+  Link: https://www.cncf.io/blog/2024/04/18/the-challenges-of-rising-mttr-and-what-to-do/
+  ┌─────────────────────────────────────────────────┬──────────┐
+  │                    Statistic                    │  Value   │
+  ├─────────────────────────────────────────────────┼──────────┤
+  │ MTTR under 1 hour                               │ Only 18% │
+  ├─────────────────────────────────────────────────┼──────────┤
+  │ Recovery takes several hours                    │ 44%      │
+  ├─────────────────────────────────────────────────┼──────────┤
+  │ Recovery takes half day+                        │ 25%      │
+  ├─────────────────────────────────────────────────┼──────────┤
+  │ Recovery takes 1 day+                           │ 11%      │
+  ├─────────────────────────────────────────────────┼──────────┤
+  │ Cost/volume as challenge                        │ 42%      │
+  ├─────────────────────────────────────────────────┼──────────┤
+  │ K8s monitoring/troubleshooting as top challenge │ 40%      │
+  └─────────────────────────────────────────────────┴──────────┘
+  Quotable snippet:
+  "In 2021, 47% of respondents said their MTTR was over an hour, in 2022 it was 64%, and in 2023 it grew to 74%. This means that despite the growing emphasis on observability, MTTR is heading in the wrong direction."
+
+  ---
+  Source 3: CNCF Annual Survey 2024
+
+  Link: https://www.cncf.io/reports/cncf-annual-survey-2024/
+  PDF: https://www.cncf.io/wp-content/uploads/2025/04/cncf_annual_survey24_031225a.pdf
+  ┌────────────────────────────┬───────────────────────────┐
+  │         Statistic          │           Value           │
+  ├────────────────────────────┼───────────────────────────┤
+  │ Kubernetes in production   │ 80% (up from 66% in 2023) │
+  ├────────────────────────────┼───────────────────────────┤
+  │ Security as top challenge  │ 72%                       │
+  ├────────────────────────────┼───────────────────────────┤
+  │ Observability as challenge │ 51%                       │
+  ├────────────────────────────┼───────────────────────────┤
+  │ Lack of training cited     │ 51%                       │
+  ├────────────────────────────┼───────────────────────────┤
+  │ Cultural challenges        │ 55%                       │
+  └────────────────────────────┴───────────────────────────┘
+  Methodology: 750 respondents, Fall 2024.
+
+  ---
+  Source 4: Dynatrace State of Observability 2024
+
+  Link: https://www.dynatrace.com/info/reports/state-of-observability-2024/
+  ┌─────────────────────────────────────────────────┬────────────────────┐
+  │                    Statistic                    │       Value        │
+  ├─────────────────────────────────────────────────┼────────────────────┤
+  │ Data beyond human ability to manage             │ 86%                │
+  ├─────────────────────────────────────────────────┼────────────────────┤
+  │ Average monitoring tools used                   │ 10 different tools │
+  ├─────────────────────────────────────────────────┼────────────────────┤
+  │ Tool complexity adds to challenges              │ 85%                │
+  ├─────────────────────────────────────────────────┼────────────────────┤
+  │ Can't keep pace with change                     │ 81%                │
+  ├─────────────────────────────────────────────────┼────────────────────┤
+  │ Time spent on tool maintenance hurts innovation │ 81%                │
+  └─────────────────────────────────────────────────┴────────────────────┘
+  Quotable snippet:
+  "86% of technology leaders state that the sheer volume of data generated by cloud-native technology stacks is beyond humans' ability to manage."
+
+  ---
+  Source 5: Academic Survey - RCA in Microservices (arXiv 2024)
+
+  Link: https://arxiv.org/abs/2408.00803
+  Title: "A Comprehensive Survey on Root Cause Analysis in (Micro) Services: Methodologies, Challenges, and Trends"
+
+  This is excellent for your Literature Survey slide - it's a July 2024 survey covering:
+  - Metrics-based RCA methods
+  - Trace-based RCA methods
+  - Log-based RCA methods
+  - Multi-modal RCA methods
+  - LLM-based approaches
+  - Challenges and future directions
+
+  ---
+  Source 6: ACM Computing Surveys - Intelligent RCA
+
+  Link: https://dl.acm.org/doi/10.1145/3736755
+  Title: "Intelligent Root Cause Localization in MicroService Systems: A Survey and New Perspectives"
+
+  ---
+  Updated PPT Slides with Citations
+
+  Slide 2: Problem Statement (Updated)
+
+  - Microservice failures generate fragmented observability signals across metrics, logs, and traces
+  - 82% of organizations report MTTR > 1 hour during incidents ¹
+    - Up from 74% (2023), 64% (2022), 47% (2021) — worsening trend ¹
+  - 48% cite knowledge gaps as #1 challenge (up from 30% in 2023) ¹
+  - Organizations use average of 10 different monitoring tools ²
+  - 86% say data volume is beyond human ability to manage ²
+
+  Sources:
+  ¹ Logz.io Observability Pulse 2024 (n=501)
+  ² Dynatrace State of Observability 2024
+
+  ---
+  Slide 3: Problem Background (Updated)
+
+  MTTR Trend (Logz.io Observability Pulse):
+  ┌──────┬───────────────┬──────────┐
+  │ Year │ MTTR > 1 hour │  Change  │
+  ├──────┼───────────────┼──────────┤
+  │ 2021 │ 47%           │ Baseline │
+  ├──────┼───────────────┼──────────┤
+  │ 2022 │ 64%           │ +17%     │
+  ├──────┼───────────────┼──────────┤
+  │ 2023 │ 74%           │ +10%     │
+  ├──────┼───────────────┼──────────┤
+  │ 2024 │ 82%           │ +8%      │
+  └──────┴───────────────┴──────────┘
+  Top Observability Challenges (CNCF 2024):
+  - Security: 72%
+  - Observability: 51%
+  - Resilience: 35%
+  - Persistent storage: 31%
+
+  Why Single-Modality Fails:
+  - Metrics-only: Detects CPU spike, misses memory leak cause
+  - Logs-only: Sees ERROR keyword, misses thread pool exhaustion (no error logged)
+  - Traces-only: Sees latency, misses config change root cause
+
+  Sources:
+  - https://logz.io/observability-pulse-2024/
+  - https://www.cncf.io/reports/cncf-annual-survey-2024/
+  - https://www.cncf.io/blog/2024/04/18/the-challenges-of-rising-mttr-and-what-to-do/
+
+  ---
+  Summary of Sources for Your Reference Section
+  ┌─────┬────────────────────────────────────────┬───────────────────────────────────┬───────────────────────────────────────────────────────────────────────────────────┐
+  │  #  │                 Source                 │              Use For              │                                       Link                                        │
+  ├─────┼────────────────────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ 1   │ Logz.io Observability Pulse 2024       │ MTTR stats, knowledge gaps        │ https://logz.io/observability-pulse-2024/                                         │
+  ├─────┼────────────────────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ 2   │ CNCF Blog: Rising MTTR                 │ MTTR breakdown, K8s challenges    │ https://www.cncf.io/blog/2024/04/18/the-challenges-of-rising-mttr-and-what-to-do/ │
+  ├─────┼────────────────────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ 3   │ CNCF Annual Survey 2024                │ Cloud-native adoption, challenges │ https://www.cncf.io/reports/cncf-annual-survey-2024/                              │
+  ├─────┼────────────────────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ 4   │ Dynatrace State of Observability 2024  │ Tool sprawl, data volume          │ https://www.dynatrace.com/info/reports/state-of-observability-2024/               │
+  ├─────┼────────────────────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ 5   │ arXiv Survey: RCA in Microservices     │ Academic methods survey           │ https://arxiv.org/abs/2408.00803                                                  │
+  ├─────┼────────────────────────────────────────┼───────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────┤
+  │ 6   │ ACM Computing Surveys: Intelligent RCA │ Academic literature               │ https://dl.acm.org/doi/10.1145/3736755                                            │
+  └─────┴────────────────────────────────────────┴───────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────────┘
+  ---
+  Would you like me to:
+  1. Search for more academic paper citations (DiagFusion, Nezha, RUN papers)?
+  2. Create a References slide in proper academic format?
+  3. Find downloadable PDF versions of any of these reports?

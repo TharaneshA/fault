@@ -1,0 +1,714 @@
+  Comprehensive Project Plan
+
+  Multi-Modal Root Cause Analysis for Microservices: A Systematic Study of Causal Discovery Methods
+
+  Project Duration: 5-6 Months | Team Size: 3
+
+  ---
+  Executive Summary
+
+  What This Project IS
+
+  A systematic, transparent study of how different causal discovery algorithms perform for root cause analysis in microservice systems, with:
+  - Fair comparison of 4-5 causal methods on the RCAEval benchmark
+  - A clean, modular pipeline that shows exactly how multi-modal RCA works
+  - Focus on interpretability — not just "what's the root cause" but "how did we get there"
+  - A demo dashboard for final presentation
+
+  What This Project is NOT
+
+  - ❌ A claim to beat commercial tools (Dynatrace, incident.io)
+  - ❌ A production-ready system
+  - ❌ A novel algorithm invention (we're comparing existing approaches)
+
+  Your Unique Angle
+
+  Based on my research, here's what existing work has done and where you differentiate:
+  Existing Work: RCAEval benchmark paper (WWW'25)
+  What They Did: Compared 15 methods on 735 failure cases
+  Your Differentiation: You add multi-modal fusion comparison (they focus on metrics-only)
+  ────────────────────────────────────────
+  Existing Work: "How Far Are We?" (ASE'24)
+  What They Did: Compared 9 causal discovery + 21 RCA methods
+  Your Differentiation: You add interpretability analysis (they only measure accuracy)
+  ────────────────────────────────────────
+  Existing Work: Nezha, Chain-of-Event
+  What They Did: Proposed specific multi-modal methods
+  Your Differentiation: You do systematic comparison of multiple methods in same framework
+  ────────────────────────────────────────
+  Existing Work: RUN (AAAI'24)
+  What They Did: Neural Granger for RCA
+  Your Differentiation: You compare Neural Granger against other methods fairly
+  Your contribution: First systematic comparison that evaluates causal methods on accuracy + interpretability + computational cost together, with multi-modal data fusion.
+
+  ---
+  Project Architecture Overview
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │                         PROJECT ARCHITECTURE                                 │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ LAYER 1: DATA COLLECTION & PREPROCESSING                                    │
+  │ ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                          │
+  │ │   Metrics   │  │    Logs     │  │   Traces    │                          │
+  │ │ (Prometheus)│  │   (ELK)     │  │  (Jaeger)   │                          │
+  │ └──────┬──────┘  └──────┬──────┘  └──────┬──────┘                          │
+  │        │                │                │                                  │
+  │        └────────────────┼────────────────┘                                  │
+  │                         ▼                                                   │
+  │              ┌─────────────────────┐                                        │
+  │              │  Event Unification  │  ← Convert all modalities to events   │
+  │              │  (Member A's work)  │                                        │
+  │              └──────────┬──────────┘                                        │
+  └─────────────────────────┼───────────────────────────────────────────────────┘
+                            │
+                            ▼
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ LAYER 2: CAUSAL DISCOVERY (PLUGGABLE ALGORITHMS)                            │
+  │                                                                             │
+  │  ┌──────────────────────────────────────────────────────────────────────┐  │
+  │  │                    ALGORITHM COMPARISON FRAMEWORK                     │  │
+  │  │                         (Member B's work)                             │  │
+  │  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐        │  │
+  │  │  │   PC    │ │ Granger │ │ Neural  │ │  GNN-   │ │Attention│        │  │
+  │  │  │Algorithm│ │Causality│ │ Granger │ │  Based  │ │ -Based  │        │  │
+  │  │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘        │  │
+  │  │       │           │           │           │           │              │  │
+  │  │       └───────────┴───────────┼───────────┴───────────┘              │  │
+  │  │                               ▼                                       │  │
+  │  │                    ┌─────────────────────┐                           │  │
+  │  │                    │    Causal Graph     │                           │  │
+  │  │                    │   (Unified Output)  │                           │  │
+  │  │                    └─────────────────────┘                           │  │
+  │  └──────────────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────┬───────────────────────────────────────────────────┘
+                            │
+                            ▼
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ LAYER 3: ROOT CAUSE RANKING & EXPLANATION                                   │
+  │                         (Member C's work)                                   │
+  │  ┌──────────────────────────────────────────────────────────────────────┐  │
+  │  │  Causal Graph → Graph Traversal → Ranked Root Causes → Explanations  │  │
+  │  │                                                                       │  │
+  │  │  Output:                                                              │  │
+  │  │  ┌─────────────────────────────────────────────────────────────────┐ │  │
+  │  │  │ Root Cause: payment-db (confidence: 0.89)                       │ │  │
+  │  │  │ Explanation: "Anomaly in payment-db CPU metrics at 14:32:05     │ │  │
+  │  │  │ caused latency spike in payment-service (via DB connection),    │ │  │
+  │  │  │ which propagated to order-service (via API call), reaching      │ │  │
+  │  │  │ frontend at 14:32:08"                                           │ │  │
+  │  │  │ Causal Chain: payment-db → payment-svc → order-svc → frontend   │ │  │
+  │  │  └─────────────────────────────────────────────────────────────────┘ │  │
+  │  └──────────────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────┬───────────────────────────────────────────────────┘
+                            │
+                            ▼
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │ LAYER 4: EVALUATION & VISUALIZATION                                         │
+  │                       (All members + Demo App)                              │
+  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐                │
+  │  │   Accuracy     │  │Interpretability│  │  Performance   │                │
+  │  │  (Top-1/3/5)   │  │   (Human Eval) │  │  (Time/Memory) │                │
+  │  └────────────────┘  └────────────────┘  └────────────────┘                │
+  │                                                                             │
+  │  ┌──────────────────────────────────────────────────────────────────────┐  │
+  │  │                    DEMO DASHBOARD (Desktop App)                       │  │
+  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                   │  │
+  │  │  │  Service    │  │   Causal    │  │  Root Cause │                   │  │
+  │  │  │  Topology   │  │   Graph     │  │   Timeline  │                   │  │
+  │  │  └─────────────┘  └─────────────┘  └─────────────┘                   │  │
+  │  └──────────────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Team Contribution Split
+
+  Member A: Data Pipeline & Event Unification
+
+  Responsibility: Build the foundation that converts raw observability data into a unified format that all causal algorithms can use.
+  ┌───────────────────────┬───────────────────────────────────────────────────────────────┬────────────────────────────┐
+  │       Component       │                          Description                          │      Technical Skills      │
+  ├───────────────────────┼───────────────────────────────────────────────────────────────┼────────────────────────────┤
+  │ Metric Processor      │ Fetch from Prometheus, detect anomalies, convert to events    │ Python, time-series        │
+  │                       │                                                               │ analysis                   │
+  ├───────────────────────┼───────────────────────────────────────────────────────────────┼────────────────────────────┤
+  │ Log Processor         │ Parse logs (Drain algorithm), extract templates, embed        │ NLP basics, regex          │
+  │                       │ semantically                                                  │                            │
+  ├───────────────────────┼───────────────────────────────────────────────────────────────┼────────────────────────────┤
+  │ Trace Processor       │ Extract spans from Jaeger, identify anomalous spans           │ Distributed tracing        │
+  │                       │                                                               │ concepts                   │
+  ├───────────────────────┼───────────────────────────────────────────────────────────────┼────────────────────────────┤
+  │ Event Unifier         │ Align timestamps, create unified event format                 │ Data engineering           │
+  ├───────────────────────┼───────────────────────────────────────────────────────────────┼────────────────────────────┤
+  │ Data Loader for       │ Load RE1/RE2/RE3 datasets into pipeline                       │ Data wrangling             │
+  │ RCAEval               │                                                               │                            │
+  └───────────────────────┴───────────────────────────────────────────────────────────────┴────────────────────────────┘
+  Deliverables:
+  1. Working data pipeline that processes RCAEval datasets
+  2. Unified event schema documentation
+  3. Code for each processor (metrics, logs, traces)
+  4. Preprocessing module for Train-Ticket live demo
+
+  ---
+  Member B: Causal Discovery Algorithm Framework
+
+  Responsibility: Implement/integrate multiple causal discovery algorithms in a pluggable framework for fair comparison.
+  ┌───────────────────────┬───────────────────────┬───────────────────────────────┬──────────────────────────────────┐
+  │       Algorithm       │         Type          │     Implementation Source     │          Why Include It          │
+  ├───────────────────────┼───────────────────────┼───────────────────────────────┼──────────────────────────────────┤
+  │ PC Algorithm          │ Classical statistical │ causal-learn library          │ Baseline, most common in papers  │
+  ├───────────────────────┼───────────────────────┼───────────────────────────────┼──────────────────────────────────┤
+  │ Granger Causality     │ Time-series based     │ statsmodels                   │ Simple, interpretable            │
+  ├───────────────────────┼───────────────────────┼───────────────────────────────┼──────────────────────────────────┤
+  │ Neural Granger (NGCD) │ Deep learning         │ Implement from RUN paper      │ State-of-the-art for time-series │
+  ├───────────────────────┼───────────────────────┼───────────────────────────────┼──────────────────────────────────┤
+  │ DAG-GNN               │ Graph neural network  │ castle library                │ Represents GNN approaches        │
+  ├───────────────────────┼───────────────────────┼───────────────────────────────┼──────────────────────────────────┤
+  │ Attention-based       │ Transformer-style     │ Implement from Chain-of-Event │ Multi-modal friendly             │
+  └───────────────────────┴───────────────────────┴───────────────────────────────┴──────────────────────────────────┘
+  Deliverables:
+  1. Pluggable algorithm interface (all algorithms have same input/output)
+  2. Implementation/integration of 5 algorithms
+  3. Hyperparameter tuning scripts
+  4. Algorithm comparison documentation ("when to use which")
+
+  ---
+  Member C: Ranking, Explanation & Evaluation
+
+  Responsibility: Take causal graphs from any algorithm and produce ranked root causes with explanations, plus design evaluation framework.
+  ┌─────────────────────────┬─────────────────────────────────────────────────────────┬────────────────────────┐
+  │        Component        │                       Description                       │    Technical Skills    │
+  ├─────────────────────────┼─────────────────────────────────────────────────────────┼────────────────────────┤
+  │ Graph Traversal         │ Walk causal graph to find root cause candidates         │ Graph algorithms       │
+  ├─────────────────────────┼─────────────────────────────────────────────────────────┼────────────────────────┤
+  │ Ranking Algorithm       │ Score candidates by path strength, historical accuracy  │ Algorithm design       │
+  ├─────────────────────────┼─────────────────────────────────────────────────────────┼────────────────────────┤
+  │ Explanation Generator   │ Produce human-readable causal chains                    │ Template-based NLG     │
+  ├─────────────────────────┼─────────────────────────────────────────────────────────┼────────────────────────┤
+  │ Evaluation Framework    │ Implement Top-k accuracy, MAP, interpretability metrics │ Metrics design         │
+  ├─────────────────────────┼─────────────────────────────────────────────────────────┼────────────────────────┤
+  │ Interpretability Scorer │ Measure explanation quality (human study design)        │ Evaluation methodology │
+  └─────────────────────────┴─────────────────────────────────────────────────────────┴────────────────────────┘
+  Deliverables:
+  1. Ranking module that works with any causal graph
+  2. Explanation generation with templates
+  3. Evaluation scripts for all metrics
+  4. Human evaluation protocol for interpretability
+
+  ---
+  Shared Work: Demo Dashboard
+
+  All three members contribute to the final demo app:
+  ┌────────────────────────────┬──────────┬─────────────────────────────────────┐
+  │         Component          │  Owner   │             Description             │
+  ├────────────────────────────┼──────────┼─────────────────────────────────────┤
+  │ Service Topology View      │ Member A │ Show microservice dependencies      │
+  ├────────────────────────────┼──────────┼─────────────────────────────────────┤
+  │ Causal Graph Visualization │ Member B │ Interactive graph with edge weights │
+  ├────────────────────────────┼──────────┼─────────────────────────────────────┤
+  │ Root Cause Timeline        │ Member C │ Propagation chain animation         │
+  ├────────────────────────────┼──────────┼─────────────────────────────────────┤
+  │ Algorithm Switcher         │ Member B │ Compare algorithms side-by-side     │
+  ├────────────────────────────┼──────────┼─────────────────────────────────────┤
+  │ Integration                │ All      │ Combine into single desktop app     │
+  └────────────────────────────┴──────────┴─────────────────────────────────────┘
+  Tech Stack for Demo App:
+  - Option 1: Python + Streamlit (easiest, web-based)
+  - Option 2: Python + PyQt/Tkinter (desktop, more impressive)
+  - Option 3: Electron + React (most polished, more work)
+
+  Recommendation: Streamlit — fast to build, looks professional, easy to demo
+
+  ---
+  Detailed Timeline (24 Weeks)
+
+  Phase 1: Foundation (Weeks 1-4)
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 1-2: Setup & Literature Review                             │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ ALL MEMBERS:                                                    │
+  │ • Read key papers (Nezha, Chain-of-Event, RUN, RCAEval paper)  │
+  │ • Set up development environment                                │
+  │ • Clone RCAEval repository, explore datasets                    │
+  │ • Set up shared GitHub repo with proper structure               │
+  │                                                                 │
+  │ DELIVERABLE: Literature review doc, working dev environment     │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 3-4: Data Understanding & Initial Pipeline                 │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ MEMBER A:                                                       │
+  │ • Deep dive into RCAEval data format (RE1, RE2, RE3)           │
+  │ • Write data loaders for all three datasets                     │
+  │ • Document data schema                                          │
+  │                                                                 │
+  │ MEMBER B:                                                       │
+  │ • Study PC algorithm and Granger causality theory               │
+  │ • Set up causal-learn and statsmodels libraries                 │
+  │ • Run existing RCAEval baselines, understand output format      │
+  │                                                                 │
+  │ MEMBER C:                                                       │
+  │ • Study evaluation metrics (Top-1/3/5, MAP, MRR)               │
+  │ • Understand how RCAEval paper evaluates methods                │
+  │ • Design interpretability evaluation framework (draft)          │
+  │                                                                 │
+  │ DELIVERABLE: Working data loaders, baseline runs, eval design   │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Phase 2: Core Development (Weeks 5-12)
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 5-6: Event Unification + First Algorithms                  │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ MEMBER A:                                                       │
+  │ • Build metric anomaly detector (statistical, 3-sigma)          │
+  │ • Build metric-to-event converter                               │
+  │ • Test on RE1 dataset (metrics only)                            │
+  │                                                                 │
+  │ MEMBER B:                                                       │
+  │ • Implement PC algorithm wrapper                                │
+  │ • Implement Granger causality wrapper                           │
+  │ • Define common interface for all algorithms                    │
+  │                                                                 │
+  │ MEMBER C:                                                       │
+  │ • Build basic graph traversal for root cause ranking            │
+  │ • Implement Top-1/3/5 accuracy calculation                      │
+  │ • First end-to-end test: data → PC → ranking → accuracy         │
+  │                                                                 │
+  │ MILESTONE: First working pipeline (metrics only, 2 algorithms)  │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 7-8: Multi-Modal + More Algorithms                         │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ MEMBER A:                                                       │
+  │ • Build log parser (Drain algorithm)                            │
+  │ • Build log-to-event converter with semantic embedding          │
+  │ • Build trace-to-event converter                                │
+  │ • Test on RE2 dataset (multi-modal)                             │
+  │                                                                 │
+  │ MEMBER B:                                                       │
+  │ • Implement Neural Granger (from RUN paper or available code)   │
+  │ • Implement DAG-GNN wrapper (from castle library)               │
+  │ • Ensure all algorithms work with unified event format          │
+  │                                                                 │
+  │ MEMBER C:                                                       │
+  │ • Build explanation generator (template-based)                  │
+  │ • Design human evaluation protocol for interpretability         │
+  │ • Implement additional metrics (MAP, MRR)                       │
+  │                                                                 │
+  │ MILESTONE: Multi-modal pipeline, 4 algorithms working           │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 9-10: Attention-Based + Integration                        │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ MEMBER A:                                                       │
+  │ • Refine event unification based on initial results             │
+  │ • Add temporal alignment across modalities                      │
+  │ • Optimize preprocessing speed                                  │
+  │                                                                 │
+  │ MEMBER B:                                                       │
+  │ • Implement attention-based causal discovery                    │
+  │ • Tune hyperparameters for all algorithms                       │
+  │ • Document algorithm-specific settings                          │
+  │                                                                 │
+  │ MEMBER C:                                                       │
+  │ • Refine ranking algorithm based on initial experiments         │
+  │ • Improve explanation quality                                   │
+  │ • Run full evaluation on RE1 dataset                            │
+  │                                                                 │
+  │ MILESTONE: 5 algorithms, full pipeline, RE1 evaluation complete │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 11-12: Full Evaluation + Comparison                        │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ ALL MEMBERS:                                                    │
+  │ • Run all 5 algorithms on all 3 datasets (RE1, RE2, RE3)       │
+  │ • Collect results: accuracy, speed, memory usage                │
+  │ • Conduct interpretability human evaluation (10-15 people)      │
+  │ • Analyze results, identify patterns                            │
+  │                                                                 │
+  │ MILESTONE: Complete evaluation results                          │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Phase 3: Demo & Polish (Weeks 13-20)
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 13-14: Demo App Development                                │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ MEMBER A:                                                       │
+  │ • Build service topology visualization component                │
+  │ • Connect data pipeline to demo app                             │
+  │                                                                 │
+  │ MEMBER B:                                                       │
+  │ • Build causal graph visualization (interactive)                │
+  │ • Add algorithm switcher UI                                     │
+  │                                                                 │
+  │ MEMBER C:                                                       │
+  │ • Build root cause timeline/explanation view                    │
+  │ • Add comparison table view                                     │
+  │                                                                 │
+  │ MILESTONE: Basic demo app working                               │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 15-16: Live Demo Setup (Optional but Impressive)           │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ IF TIME ALLOWS:                                                 │
+  │ • Deploy Train-Ticket on local Kubernetes (minikube/kind)       │
+  │ • Connect live observability stack                              │
+  │ • Set up fault injection scripts                                │
+  │ • Demo: inject fault → watch system diagnose                    │
+  │                                                                 │
+  │ FALLBACK:                                                       │
+  │ • Use pre-recorded RCAEval failure cases                        │
+  │ • "Replay" mode that simulates real-time analysis               │
+  │                                                                 │
+  │ MILESTONE: Live or replay demo working                          │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 17-18: Documentation & Report Writing                      │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ ALL MEMBERS:                                                    │
+  │ • Write project report (introduction, methodology, results)     │
+  │ • Create architecture diagrams                                  │
+  │ • Document all algorithms with pros/cons                        │
+  │ • Prepare comparison tables and charts                          │
+  │                                                                 │
+  │ MILESTONE: Draft report complete                                │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 19-20: Demo Polish & Presentation Prep                     │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ ALL MEMBERS:                                                    │
+  │ • Polish demo app UI                                            │
+  │ • Prepare presentation slides                                   │
+  │ • Practice demo flow                                            │
+  │ • Prepare for Q&A (anticipate questions)                        │
+  │                                                                 │
+  │ MILESTONE: Ready for presentation                               │
+  └─────────────────────────────────────────────────────────────────┘
+
+  Phase 4: Buffer & Final Submission (Weeks 21-24)
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ WEEK 21-24: Buffer, Final Polish, Submission                    │
+  ├─────────────────────────────────────────────────────────────────┤
+  │ • Handle unexpected issues                                      │
+  │ • Final report revisions                                        │
+  │ • Code cleanup and documentation                                │
+  │ • Final presentation rehearsals                                 │
+  │ • Submit!                                                       │
+  └─────────────────────────────────────────────────────────────────┘
+
+  ---
+  Algorithms Deep Dive
+
+  Algorithm Comparison Framework
+  ┌───────────────────┬──────────────────┬─────────────────┬──────────────────┬─────────────────────────────────────┐
+  │     Algorithm     │       Type       │ Time Complexity │ Interpretability │              Best For               │
+  ├───────────────────┼──────────────────┼─────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ PC Algorithm      │ Constraint-based │ O(n^d)          │ ⭐⭐⭐⭐⭐ High  │ Small graphs, when assumptions hold │
+  ├───────────────────┼──────────────────┼─────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ Granger Causality │ Time-series      │ O(n²p)          │ ⭐⭐⭐⭐ High    │ Temporal data, linear relationships │
+  ├───────────────────┼──────────────────┼─────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ Neural Granger    │ Deep learning    │ O(n²) per epoch │ ⭐⭐⭐ Medium    │ Non-linear temporal patterns        │
+  ├───────────────────┼──────────────────┼─────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ DAG-GNN           │ Graph neural net │ O(n² × d)       │ ⭐⭐ Low         │ Complex dependencies                │
+  ├───────────────────┼──────────────────┼─────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ Attention-based   │ Transformer      │ O(n² × L)       │ ⭐⭐⭐ Medium    │ Multi-modal fusion                  │
+  └───────────────────┴──────────────────┴─────────────────┴──────────────────┴─────────────────────────────────────┘
+  What You'll Discover (Expected Findings)
+
+  Based on existing research, you'll likely find:
+  ┌───────────────────────────────────────────────────────────┬────────────────────────────────────────────────┐
+  │                          Finding                          │                  Implication                   │
+  ├───────────────────────────────────────────────────────────┼────────────────────────────────────────────────┤
+  │ PC algorithm is fastest but assumes no hidden confounders │ Good for simple systems, fails on complex ones │
+  ├───────────────────────────────────────────────────────────┼────────────────────────────────────────────────┤
+  │ Neural methods are more accurate but slower               │ Trade-off between speed and accuracy           │
+  ├───────────────────────────────────────────────────────────┼────────────────────────────────────────────────┤
+  │ Attention-based handles multi-modal better                │ Worth the complexity for heterogeneous data    │
+  ├───────────────────────────────────────────────────────────┼────────────────────────────────────────────────┤
+  │ Granger is surprisingly competitive                       │ Simple baseline is hard to beat significantly  │
+  ├───────────────────────────────────────────────────────────┼────────────────────────────────────────────────┤
+  │ Interpretability inversely correlates with accuracy       │ The trade-off your project highlights          │
+  └───────────────────────────────────────────────────────────┴────────────────────────────────────────────────┘
+  ---
+  Evaluation Framework
+
+  Quantitative Metrics
+  ┌──────────────────────────────┬───────────────────────────────────────────────┬──────────────────────────────────┐
+  │            Metric            │                    Formula                    │         What It Measures         │
+  ├──────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────────────┤
+  │ Top-1 Accuracy               │ % of cases where true root cause is ranked #1 │ Precision at finding exact cause │
+  ├──────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────────────┤
+  │ Top-3 Accuracy               │ % of cases where true root cause is in top 3  │ Tolerance for near-misses        │
+  ├──────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────────────┤
+  │ Top-5 Accuracy               │ % of cases where true root cause is in top 5  │ Broader recall                   │
+  ├──────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────────────┤
+  │ Mean Average Precision (MAP) │ Mean of AP across all test cases              │ Overall ranking quality          │
+  ├──────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────────────┤
+  │ Mean Reciprocal Rank (MRR)   │ Mean of 1/rank of true root cause             │ Penalizes lower rankings         │
+  ├──────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────────────┤
+  │ Inference Time               │ Seconds to produce root cause                 │ Practical usability              │
+  ├──────────────────────────────┼───────────────────────────────────────────────┼──────────────────────────────────┤
+  │ Memory Usage                 │ Peak RAM during inference                     │ Resource requirements            │
+  └──────────────────────────────┴───────────────────────────────────────────────┴──────────────────────────────────┘
+  Interpretability Evaluation (Human Study)
+
+  Protocol:
+  1. Select 20 failure cases from RCAEval
+  2. For each case, show explanations from all 5 algorithms
+  3. Ask 10-15 participants (classmates, TAs) to rate:
+    - Clarity (1-5): "How easy is it to understand?"
+    - Completeness (1-5): "Does it explain the full causal chain?"
+    - Actionability (1-5): "Would this help me fix the problem?"
+    - Trust (1-5): "Do I believe this explanation?"
+
+  Output: Interpretability score per algorithm
+
+  ---
+  GitHub Repository Structure
+
+  microservice-rca-study/
+  ├── README.md                    # Project overview, how to run
+  ├── requirements.txt             # Python dependencies
+  ├── setup.py                     # Package installation
+  │
+  ├── docs/                        # Documentation
+  │   ├── architecture.md          # System design explanation
+  │   ├── algorithms.md            # Algorithm descriptions
+  │   ├── evaluation.md            # Evaluation methodology
+  │   └── results.md               # Summary of findings
+  │
+  ├── data/                        # Data handling
+  │   ├── loaders/                 # RCAEval dataset loaders
+  │   │   ├── re1_loader.py
+  │   │   ├── re2_loader.py
+  │   │   └── re3_loader.py
+  │   └── preprocessing/           # Data preprocessing
+  │       ├── metric_processor.py
+  │       ├── log_processor.py
+  │       ├── trace_processor.py
+  │       └── event_unifier.py
+  │
+  ├── algorithms/                  # Causal discovery algorithms
+  │   ├── base.py                  # Abstract base class
+  │   ├── pc_algorithm.py
+  │   ├── granger.py
+  │   ├── neural_granger.py
+  │   ├── dag_gnn.py
+  │   └── attention_based.py
+  │
+  ├── ranking/                     # Root cause ranking
+  │   ├── graph_traversal.py
+  │   ├── ranking_algorithm.py
+  │   └── explanation_generator.py
+  │
+  ├── evaluation/                  # Evaluation framework
+  │   ├── metrics.py               # Accuracy, MAP, MRR
+  │   ├── benchmark_runner.py      # Run all algorithms
+  │   └── interpretability.py      # Human eval analysis
+  │
+  ├── demo/                        # Demo application
+  │   ├── app.py                   # Streamlit main app
+  │   ├── components/
+  │   │   ├── topology_view.py
+  │   │   ├── causal_graph_view.py
+  │   │   └── timeline_view.py
+  │   └── assets/                  # Static files
+  │
+  ├── experiments/                 # Experiment scripts
+  │   ├── run_all_algorithms.py
+  │   ├── hyperparameter_tuning.py
+  │   └── ablation_study.py
+  │
+  ├── results/                     # Experiment results
+  │   ├── tables/
+  │   ├── figures/
+  │   └── human_eval/
+  │
+  └── tests/                       # Unit tests
+      ├── test_data_loaders.py
+      ├── test_algorithms.py
+      └── test_ranking.py
+
+  ---
+  Demo App Design
+
+  Main Dashboard Layout
+
+  ┌─────────────────────────────────────────────────────────────────────────────┐
+  │  🔬 Multi-Modal RCA Study Dashboard                    [Algorithm: ▼ PC   ] │
+  ├─────────────────────────────────────────────────────────────────────────────┤
+  │                                                                             │
+  │  ┌─────────────────────────┐  ┌─────────────────────────────────────────┐  │
+  │  │   SERVICE TOPOLOGY      │  │         CAUSAL GRAPH                    │  │
+  │  │                         │  │                                         │  │
+  │  │    ┌─────┐              │  │     [payment-db]                        │  │
+  │  │    │front│              │  │          │ 0.89                         │  │
+  │  │    └──┬──┘              │  │          ▼                              │  │
+  │  │       │                 │  │    [payment-svc]                        │  │
+  │  │  ┌────┴────┐            │  │          │ 0.76                         │  │
+  │  │  │  order  │            │  │          ▼                              │  │
+  │  │  └────┬────┘            │  │    [order-svc]                          │  │
+  │  │       │                 │  │          │ 0.65                         │  │
+  │  │  ┌────┴────┐            │  │          ▼                              │  │
+  │  │  │ payment │            │  │    [frontend]                           │  │
+  │  │  └────┬────┘            │  │                                         │  │
+  │  │       │                 │  │  Edge weights = causal strength         │  │
+  │  │  ┌────┴────┐            │  │                                         │  │
+  │  │  │   db    │ ← ALERT    │  │                                         │  │
+  │  │  └─────────┘            │  │                                         │  │
+  │  └─────────────────────────┘  └─────────────────────────────────────────┘  │
+  │                                                                             │
+  │  ┌──────────────────────────────────────────────────────────────────────┐  │
+  │  │   ROOT CAUSE ANALYSIS RESULT                                         │  │
+  │  │                                                                       │  │
+  │  │   🎯 Root Cause: payment-db (Confidence: 89%)                        │  │
+  │  │                                                                       │  │
+  │  │   📝 Explanation:                                                     │  │
+  │  │   "CPU anomaly detected in payment-db at 14:32:05 caused connection  │  │
+  │  │    pool exhaustion, leading to timeout in payment-service, which     │  │
+  │  │    propagated to order-service via synchronous API call."            │  │
+  │  │                                                                       │  │
+  │  │   ⏱️ Causal Chain Timeline:                                          │  │
+  │  │   14:32:05 [payment-db] CPU spike detected                           │  │
+  │  │   14:32:06 [payment-svc] Connection timeout errors                   │  │
+  │  │   14:32:07 [order-svc] Upstream failure                              │  │
+  │  │   14:32:08 [frontend] 500 errors to users                            │  │
+  │  └──────────────────────────────────────────────────────────────────────┘  │
+  │                                                                             │
+  │  ┌──────────────────────────────────────────────────────────────────────┐  │
+  │  │   ALGORITHM COMPARISON                                                │  │
+  │  │   ┌───────────────┬─────────┬─────────┬───────────┬────────────────┐ │  │
+  │  │   │ Algorithm     │ Top-1   │ Top-3   │ Time (s)  │ This Case      │ │  │
+  │  │   ├───────────────┼─────────┼─────────┼───────────┼────────────────┤ │  │
+  │  │   │ PC Algorithm  │ 45.2%   │ 71.3%   │ 0.8       │ ✓ Correct      │ │  │
+  │  │   │ Granger       │ 42.1%   │ 68.5%   │ 1.2       │ ✓ Correct      │ │  │
+  │  │   │ Neural Granger│ 52.3%   │ 78.1%   │ 4.5       │ ✓ Correct      │ │  │
+  │  │   │ DAG-GNN       │ 48.7%   │ 74.2%   │ 8.2       │ ✗ Wrong        │ │  │
+  │  │   │ Attention     │ 54.1%   │ 79.8%   │ 3.1       │ ✓ Correct      │ │  │
+  │  │   └───────────────┴─────────┴─────────┴───────────┴────────────────┘ │  │
+  │  └──────────────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  Key Papers to Read
+
+  Must Read (Week 1-2)
+  Paper: RCAEval
+  Venue: WWW'25
+  Why Read It: Your benchmark, understand datasets
+  Link: https://arxiv.org/abs/2412.17015, https://github.com/phamquiluan/RCAEval
+  ────────────────────────────────────────
+  Paper: "How Far Are We?"
+  Venue: ASE'24
+  Why Read It: Comprehensive method comparison
+  Link: https://arxiv.org/abs/2408.13729
+  ────────────────────────────────────────
+  Paper: Nezha
+  Venue: FSE'23
+  Why Read It: Multi-modal event transformation
+  Link: https://dl.acm.org/doi/10.1145/3611643.3616249, https://github.com/IntelligentDDS/Nezha
+  ────────────────────────────────────────
+  Paper: Chain-of-Event
+  Venue: FSE'24
+  Why Read It: Attention-based causal learning
+  Link: https://netman.aiops.org/wp-content/uploads/2024/07/Chain-of-Event_Interpretable-Root-Cause-Analysis-for-MicroservicesFSE24-Camera-Ready.pdf
+  Algorithm-Specific Reading
+  Paper: RUN (Neural Granger)
+  What You'll Learn: How to do neural causal discovery
+  Link: https://ojs.aaai.org/index.php/AAAI/article/view/27772
+  ────────────────────────────────────────
+  Paper: DAG-GNN
+  What You'll Learn: GNN for causal structure learning
+  Link: https://arxiv.org/abs/1904.10098
+  ────────────────────────────────────────
+  Paper: PC Algorithm Tutorial
+  What You'll Learn: Classical constraint-based approach
+  Link: https://causal-learn.readthedocs.io/
+  ---
+  Compute Requirements
+
+  Minimum (Laptops Only)
+  ┌───────────┬──────────────────┬───────────────────────────────┐
+  │ Component │   Requirement    │             Notes             │
+  ├───────────┼──────────────────┼───────────────────────────────┤
+  │ RAM       │ 16GB recommended │ DAG-GNN may need more         │
+  ├───────────┼──────────────────┼───────────────────────────────┤
+  │ Storage   │ 20GB free        │ Datasets + models             │
+  ├───────────┼──────────────────┼───────────────────────────────┤
+  │ Python    │ 3.9+             │ For latest libraries          │
+  ├───────────┼──────────────────┼───────────────────────────────┤
+  │ GPU       │ Not required     │ CPU is fine for RCAEval scale │
+  └───────────┴──────────────────┴───────────────────────────────┘
+  If You Arrange More Resources
+  ┌───────────────────┬──────────────────────────────────┐
+  │    If You Get     │            Use It For            │
+  ├───────────────────┼──────────────────────────────────┤
+  │ 32GB+ RAM machine │ Run all experiments in parallel  │
+  ├───────────────────┼──────────────────────────────────┤
+  │ GPU (even laptop) │ Speed up Neural Granger, DAG-GNN │
+  ├───────────────────┼──────────────────────────────────┤
+  │ Small K8s cluster │ Live demo with Train-Ticket      │
+  └───────────────────┴──────────────────────────────────┘
+  My recommendation: Start with laptops. If Neural Granger or DAG-GNN is too slow, consider Google Colab (free GPU) for those specific experiments.
+
+  ---
+  Risk Mitigation
+  ┌─────────────────────────────────────────┬────────────┬────────┬────────────────────────────────────┐
+  │                  Risk                   │ Likelihood │ Impact │             Mitigation             │
+  ├─────────────────────────────────────────┼────────────┼────────┼────────────────────────────────────┤
+  │ Neural Granger too slow on laptop       │ Medium     │ Medium │ Use smaller subset or Google Colab │
+  ├─────────────────────────────────────────┼────────────┼────────┼────────────────────────────────────┤
+  │ DAG-GNN doesn't converge                │ Medium     │ Low    │ Have 4 other algorithms as backup  │
+  ├─────────────────────────────────────────┼────────────┼────────┼────────────────────────────────────┤
+  │ RCAEval data format issues              │ Low        │ High   │ Start data loading in Week 1       │
+  ├─────────────────────────────────────────┼────────────┼────────┼────────────────────────────────────┤
+  │ Live demo too complex                   │ Medium     │ Low    │ Fallback to "replay" mode          │
+  ├─────────────────────────────────────────┼────────────┼────────┼────────────────────────────────────┤
+  │ Interpretability eval low participation │ Medium     │ Medium │ Start recruiting evaluators early  │
+  └─────────────────────────────────────────┴────────────┴────────┴────────────────────────────────────┘
+  ---
+  Final Presentation Structure (15-20 min)
+
+  1. INTRODUCTION (2 min)
+     - Problem: Why RCA in microservices is hard
+     - Motivation: Many algorithms exist, which to use when?
+
+  2. BACKGROUND (3 min)
+     - Brief explanation of causal discovery
+     - Overview of 5 algorithms you compared
+
+  3. SYSTEM ARCHITECTURE (3 min)
+     - Show architecture diagram
+     - Explain data flow: raw data → events → causal graph → root cause
+
+  4. METHODOLOGY (3 min)
+     - RCAEval benchmark overview
+     - Evaluation metrics (accuracy + interpretability)
+
+  5. RESULTS (4 min)
+     - Comparison table
+     - Key findings: "Algorithm X best for Y, Algorithm Z best for W"
+     - Trade-off analysis: accuracy vs speed vs interpretability
+
+  6. DEMO (3-4 min)
+     - Show dashboard
+     - Walk through a failure case
+     - Show algorithm switching
+     - (If live demo) Inject fault and watch diagnosis
+
+  7. CONCLUSION (1-2 min)
+     - Summary of findings
+     - Recommendations for practitioners
+     - Future work

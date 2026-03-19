@@ -1,0 +1,588 @@
+● Complete Project Breakdown
+
+  ---
+  Part 1: Individual Member Contributions
+
+  Member A: CMEA (Contrastive Multi-Modal Event Alignment)
+
+  What It Does:
+  Transforms raw metrics, logs, and traces into aligned, unified event representations that capture both cross-modal patterns and modality-specific signals.
+
+  Reference Papers:
+  ┌───────┬───────────────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Paper │     Venue     │                                  What We Take From It                                   │
+  ├───────┼───────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+  │ FOCAL │ NeurIPS 2023  │ Factorized contrastive learning to separate shared vs modality-specific representations │
+  ├───────┼───────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Nezha │ ESEC/FSE 2023 │ Event transformation approach (converting metrics/logs/traces into homogeneous events)  │
+  ├───────┼───────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+  │ MULAN │ WWW 2024      │ Contrastive learning for modality-invariant representations in microservices            │
+  └───────┴───────────────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+  Technical Details:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    CMEA Architecture (Member A)                         │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  Input: Raw multimodal data                                            │
+  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                  │
+  │  │   Metrics    │  │    Logs      │  │   Traces     │                  │
+  │  │  (time series)│  │ (text events)│  │ (call spans) │                  │
+  │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                  │
+  │         │                 │                 │                           │
+  │         ▼                 ▼                 ▼                           │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  Event Transformation (from Nezha)                              │   │
+  │  │  • Metrics → anomaly events: <timestamp, metric_name, direction>│   │
+  │  │  • Logs → template events: <timestamp, template_id>             │   │
+  │  │  • Traces → call events: <timestamp, caller, callee, status>    │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  Factorized Contrastive Learning (from FOCAL)                   │   │
+  │  │                                                                 │   │
+  │  │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │   │
+  │  │  │   Shared    │     │   Metric    │     │    Log      │       │   │
+  │  │  │  Encoder    │     │  Specific   │     │  Specific   │       │   │
+  │  │  │  (cross-    │     │  Encoder    │     │  Encoder    │       │   │
+  │  │  │  modal)     │     │             │     │             │       │   │
+  │  │  └──────┬──────┘     └──────┬──────┘     └──────┬──────┘       │   │
+  │  │         │                   │                   │               │   │
+  │  │         └───────────────────┼───────────────────┘               │   │
+  │  │                             ▼                                   │   │
+  │  │  Contrastive Loss: Align same-time events, separate different  │   │
+  │  │  Orthogonality Loss: Keep shared and specific spaces separate  │   │
+  │  │  (from FOCAL paper)                                            │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  Output: Unified event embeddings per service                          │
+  │  h_i = [shared_repr; metric_specific; log_specific; trace_specific]    │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  Key Equations (from FOCAL):
+  Total Loss = L_contrastive + λ₁ * L_orthogonality + λ₂ * L_reconstruction
+
+  L_contrastive: Pulls together representations from same failure, pushes apart different
+  L_orthogonality: Ensures shared and specific representations don't overlap
+
+  What DiagFusion Does (that we improve):
+  - DiagFusion uses simple fastText embedding on serialized events
+  - Treats all modalities equally after serialization
+  - Loses cross-modal correlation patterns
+
+  Our Improvement:
+  - Learn WHAT patterns are shared across modalities (e.g., "memory spike + timeout log + slow trace")
+  - Learn WHAT patterns are unique to each modality
+  - Better temporal alignment of events across modalities
+
+  ---
+  Member B: INGD (Interpretable Neural Granger with Decomposition)
+
+  What It Does:
+  Discovers causal relationships between services (not just correlations) and explains WHY each causal edge exists.
+
+  Reference Papers:
+  ┌──────────────────────────┬────────────────┬─────────────────────────────────────────────────────────────────────────────────────────┐
+  │          Paper           │     Venue      │                                  What We Take From It                                   │
+  ├──────────────────────────┼────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+  │ RUN                      │ AAAI 2024      │ Neural Granger causal discovery for microservice RCA                                    │
+  ├──────────────────────────┼────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+  │ CausalFormer             │ IEEE TKDE 2024 │ Multi-kernel causal convolution + Regression Relevance Propagation for interpretability │
+  ├──────────────────────────┼────────────────┼─────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Neural Granger Causality │ ICLR 2018      │ Original MLP-based Granger causality discovery                                          │
+  └──────────────────────────┴────────────────┴─────────────────────────────────────────────────────────────────────────────────────────┘
+  Technical Details:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    INGD Architecture (Member B)                         │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  Input: Event embeddings from CMEA (Member A)                          │
+  │         h = {h₁, h₂, ..., h_n} for n services                          │
+  │                                                                         │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  COMPONENT 1: Neural Granger Causal Discovery (from RUN)        │   │
+  │  │                                                                 │   │
+  │  │  For each pair of services (i, j):                              │   │
+  │  │                                                                 │   │
+  │  │  1. Restricted model: Predict h_j using only h_j's history     │   │
+  │  │     ŷ_j^(R) = MLP(h_j[t-1], h_j[t-2], ..., h_j[t-k])           │   │
+  │  │                                                                 │   │
+  │  │  2. Full model: Predict h_j using both h_i and h_j history     │   │
+  │  │     ŷ_j^(F) = MLP(h_i[t-1], ..., h_j[t-1], ...)                │   │
+  │  │                                                                 │   │
+  │  │  3. Causal strength: How much does adding h_i improve prediction?│  │
+  │  │     Causality(i→j) = ||ŷ_j^(F) - y_j||² / ||ŷ_j^(R) - y_j||²  │   │
+  │  │                                                                 │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  COMPONENT 2: Multi-Kernel Causal Convolution (from CausalFormer)│  │
+  │  │                                                                 │   │
+  │  │  Capture multi-scale temporal patterns:                         │   │
+  │  │  • Kernel size 3: Short-term causality (immediate effects)      │   │
+  │  │  • Kernel size 7: Medium-term causality                         │   │
+  │  │  • Kernel size 15: Long-term causality (delayed effects)        │   │
+  │  │                                                                 │   │
+  │  │  Combined: C_ij = Conv1D_k3(h_i, h_j) + Conv1D_k7 + Conv1D_k15  │   │
+  │  │                                                                 │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  COMPONENT 3: Interpretability Layer (from CausalFormer)        │   │
+  │  │                                                                 │   │
+  │  │  Regression Relevance Propagation (RRP):                        │   │
+  │  │  • Backpropagate through the network to find WHICH input       │   │
+  │  │    features contributed to each causal edge                     │   │
+  │  │                                                                 │   │
+  │  │  For edge (Inventory → Order):                                  │   │
+  │  │  • RRP shows: "memory_usage" contributed 0.67                  │   │
+  │  │               "gc_pause_time" contributed 0.23                  │   │
+  │  │               "response_time" contributed 0.10                  │   │
+  │  │                                                                 │   │
+  │  │  → Explanation: "Memory pressure caused this causal link"       │   │
+  │  │                                                                 │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  Output: Causal Graph G = (V, E, W, Explanations)                      │
+  │  • V = services                                                        │
+  │  • E = causal edges                                                    │
+  │  • W = causal strength weights                                         │
+  │  • Explanations = per-edge feature attributions                        │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  What DiagFusion Does (that we improve):
+  - Uses GNN with topology-adaptive convolution to learn propagation patterns
+  - Learns correlations, not causation
+  - No interpretability - can't explain why edges exist
+
+  Our Improvement:
+  - Neural Granger discovers true causal relationships (X causes Y, not just X correlates with Y)
+  - Multi-kernel convolution captures different time-scale causal effects
+  - Relevance propagation explains each edge with feature contributions
+
+  ---
+  Member C: CCRE (Calibrated Causal Ranking with Explanations)
+
+  What It Does:
+  Ranks root cause candidates, provides calibrated confidence scores, and generates human-readable explanations.
+
+  Reference Papers:
+  ┌────────────────────────┬──────────────┬───────────────────────────────────────────────────┐
+  │         Paper          │    Venue     │               What We Take From It                │
+  ├────────────────────────┼──────────────┼───────────────────────────────────────────────────┤
+  │ RUN                    │ AAAI 2024    │ Personalized PageRank on causal graph for ranking │
+  ├────────────────────────┼──────────────┼───────────────────────────────────────────────────┤
+  │ Calibration literature │ Various      │ Temperature scaling for confidence calibration    │
+  ├────────────────────────┼──────────────┼───────────────────────────────────────────────────┤
+  │ LIME/SHAP              │ ICML/NeurIPS │ Explanation generation concepts                   │
+  └────────────────────────┴──────────────┴───────────────────────────────────────────────────┘
+  Technical Details:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    CCRE Architecture (Member C)                         │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  Input: Causal Graph from INGD (Member B)                              │
+  │         G = (V, E, W, Explanations)                                    │
+  │         Anomaly signal: which services show symptoms                   │
+  │                                                                         │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  COMPONENT 1: Personalized PageRank (from RUN)                  │   │
+  │  │                                                                 │   │
+  │  │  Start from symptom nodes (user-facing failures)                │   │
+  │  │  Walk backwards on causal graph to find sources                 │   │
+  │  │                                                                 │   │
+  │  │  PageRank equation:                                             │   │
+  │  │  PR(v) = (1-α) * Σ PR(u) * W(u,v) / out_degree(u)  + α * S(v)  │   │
+  │  │                u→v                                              │   │
+  │  │                                                                 │   │
+  │  │  Where:                                                         │   │
+  │  │  • α = restart probability (teleport back to symptoms)          │   │
+  │  │  • S(v) = symptom vector (1 for symptom nodes, 0 otherwise)    │   │
+  │  │  • W(u,v) = causal edge weight from INGD                        │   │
+  │  │                                                                 │   │
+  │  │  Output: Ranking scores for each service                        │   │
+  │  │  [Inventory: 0.89, Order: 0.12, Cart: 0.03, ...]               │   │
+  │  │                                                                 │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  COMPONENT 2: Confidence Calibration                            │   │
+  │  │                                                                 │   │
+  │  │  Problem: Neural networks are often OVERCONFIDENT               │   │
+  │  │  • Model says 90% confident, but actually correct only 70%     │   │
+  │  │                                                                 │   │
+  │  │  Solution: Temperature Scaling (Platt Scaling)                  │   │
+  │  │                                                                 │   │
+  │  │  calibrated_prob = softmax(logits / T)                          │   │
+  │  │                                                                 │   │
+  │  │  Where T is learned on validation set to minimize:              │   │
+  │  │  ECE = Σ |acc(bin) - conf(bin)| * |bin| / N                    │   │
+  │  │       bins                                                      │   │
+  │  │                                                                 │   │
+  │  │  After calibration: "89% confident" means actually ~89% correct │   │
+  │  │                                                                 │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │  COMPONENT 3: Explanation Generation                            │   │
+  │  │                                                                 │   │
+  │  │  Combine:                                                       │   │
+  │  │  1. Root cause service + failure type                           │   │
+  │  │  2. Causal path from root to symptoms                           │   │
+  │  │  3. Edge explanations from INGD                                 │   │
+  │  │  4. Evidence from each modality                                 │   │
+  │  │                                                                 │   │
+  │  │  Template:                                                      │   │
+  │  │  "[Root Cause Service] experienced [Failure Type] due to        │   │
+  │  │   [Top Contributing Feature]. This caused [Downstream Effect]   │   │
+  │  │   in [Affected Services] via [Propagation Path].               │   │
+  │  │   Evidence: [Metric Evidence], [Log Evidence], [Trace Evidence]"│   │
+  │  │                                                                 │   │
+  │  │  Example output:                                                │   │
+  │  │  "Inventory Service experienced memory exhaustion due to        │   │
+  │  │   memory_usage reaching 95%. This caused timeout errors in     │   │
+  │  │   Order Service via the Inventory→Order API dependency.        │   │
+  │  │   Evidence: memory_usage: 45%→95%, Log: 'OutOfMemoryError',    │   │
+  │  │   Trace: Inventory calls 50ms→3000ms."                         │   │
+  │  │                                                                 │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │                              ▼                                          │
+  │  Output:                                                               │
+  │  {                                                                     │
+  │    "ranked_causes": [("Inventory", 0.89), ("Order", 0.12), ...],     │
+  │    "calibrated_confidence": 0.89,                                     │
+  │    "failure_type": "memory_exhaustion",                               │
+  │    "explanation": "Inventory Service experienced...",                 │
+  │    "evidence": { "metrics": [...], "logs": [...], "traces": [...] }  │
+  │  }                                                                     │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  What DiagFusion Does (that we improve):
+  - Uses MaxPooling + FC layer for classification output
+  - Ranks instances by event count heuristic (more events = more likely root cause)
+  - Raw softmax probabilities (uncalibrated)
+  - No explanations
+
+  Our Improvement:
+  - PageRank on causal graph for principled ranking
+  - Calibrated confidence that operators can trust
+  - Natural language explanations with evidence from all modalities
+
+  ---
+  Part 2: DiagFusion Paper Details
+
+  Datasets Used
+  ┌───────────┬───────────────────────┬────────────────────────────────┬─────────────────────────────────────────┐
+  │  Dataset  │        Source         │              Size              │                 Details                 │
+  ├───────────┼───────────────────────┼────────────────────────────────┼─────────────────────────────────────────┤
+  │ D1 (GAIA) │ CloudWise Open Source │ 10 microservices, 17 instances │ Train: 160 failures, Test: 939 failures │
+  ├───────────┼───────────────────────┼────────────────────────────────┼─────────────────────────────────────────┤
+  │ D2 (Bank) │ Commercial Bank (NDA) │ 14 microservices, 18 instances │ Train: 80 failures, Test: 79 failures   │
+  └───────────┴───────────────────────┴────────────────────────────────┴─────────────────────────────────────────┘
+  D1 (GAIA) Dataset Details:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  GAIA Dataset - Generic AIOps Atlas                                    │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  System: Simulated microservice e-commerce platform                     │
+  │  Components:                                                            │
+  │  • 10 microservices (login, cart, order, payment, etc.)                │
+  │  • 2 databases (MySQL, Redis)                                          │
+  │  • 5 host machines                                                     │
+  │                                                                         │
+  │  Data Volume:                                                           │
+  │  • Traces: 2,321,280 records                                           │
+  │  • Logs: 87,974,577 records                                            │
+  │  • Metrics: 56,684,196 records                                         │
+  │                                                                         │
+  │  Failure Types Injected:                                                │
+  │  ┌─────────────────────┬─────────────────────────┬─────────────┐       │
+  │  │ Failure Type        │ Root Cause              │ # Failures  │       │
+  │  ├─────────────────────┼─────────────────────────┼─────────────┤       │
+  │  │ System stuck        │ High memory usage       │ 505         │       │
+  │  │ Process crash       │ Incorrect deallocation  │ 16          │       │
+  │  │ Login failure       │ Network interruption    │ 527         │       │
+  │  │ File missing        │ Code bug                │ 36          │       │
+  │  │ Access denied       │ Misconfiguration        │ 15          │       │
+  │  └─────────────────────┴─────────────────────────┴─────────────┘       │
+  │                                                                         │
+  │  Link: https://github.com/CloudWise-OpenSource/GAIA-DataSet            │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  D2 (Bank) Dataset Details:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  Commercial Bank Dataset                                               │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  System: Management system of a top-tier commercial bank               │
+  │  Components:                                                            │
+  │  • 14 microservices                                                    │
+  │  • Web servers, application servers, databases, dockers                │
+  │                                                                         │
+  │  Data Volume:                                                           │
+  │  • Traces: 1,123,200 records                                           │
+  │  • Logs: 21,356,923 records                                            │
+  │  • Metrics: 8,228,010 records                                          │
+  │                                                                         │
+  │  Failure Types:                                                         │
+  │  • CPU-related failures                                                │
+  │  • Memory-related failures                                             │
+  │  • JVM-CPU-related failures                                            │
+  │  • JVM-memory-related failures                                         │
+  │  • IO-related failures                                                 │
+  │                                                                         │
+  │  Note: Not publicly available due to NDA                               │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ---
+  DiagFusion Implementation Method
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    DiagFusion Implementation                            │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  STEP 1: Event Extraction                                              │
+  │  ─────────────────────────                                             │
+  │  • Metrics: 3-sigma anomaly detection → events                         │
+  │  • Logs: Drain parsing → template extraction → events                  │
+  │  • Traces: Status code counting + 3-sigma on RT → events               │
+  │                                                                         │
+  │  STEP 2: Event Serialization                                           │
+  │  ───────────────────────────                                           │
+  │  • Group events by instance-id                                         │
+  │  • Sort by timestamp                                                   │
+  │  • Event sequence: E_i = [e1, e2, e3, ...]                            │
+  │                                                                         │
+  │  STEP 3: Event Embedding (fastText)                                    │
+  │  ──────────────────────────────────                                    │
+  │  • Train fastText on event sequences                                   │
+  │  • Supervised mode: predict failure type from sequence                 │
+  │  • Output: vector representation for each event                        │
+  │                                                                         │
+  │  STEP 4: Data Augmentation                                             │
+  │  ─────────────────────────                                             │
+  │  • Handle imbalanced failure types                                     │
+  │  • Replace random event with nearest neighbor in embedding space       │
+  │  • Expand each failure type to 1000 samples                           │
+  │                                                                         │
+  │  STEP 5: Dependency Graph Construction                                 │
+  │  ──────────────────────────────────────                                │
+  │  • From traces: caller→callee edges (bidirectional)                   │
+  │  • From deployment: co-deployed instances share edge                   │
+  │                                                                         │
+  │  STEP 6: Graph Neural Network                                          │
+  │  ────────────────────────────                                          │
+  │  • Input: Instance embeddings + dependency graph                       │
+  │  • Architecture: Topology-Adaptive Graph Convolution (TAGCN)           │
+  │  • K layers with formula: H_K = Σ (D^(-1/2) A D^(-1/2))^k X Θ_k       │
+  │                                                                         │
+  │  STEP 7: Output Layer                                                  │
+  │  ────────────────────────                                              │
+  │  • MaxPooling for graph-level representation                           │
+  │  • Task #1: FC layer → service group probabilities                    │
+  │  • Task #2: FC layer → failure type probabilities                     │
+  │  • Joint loss: combines both tasks                                     │
+  │                                                                         │
+  │  STEP 8: Ranking (Heuristic)                                          │
+  │  ──────────────────────────                                            │
+  │  • Within predicted service group, rank instances by event count       │
+  │  • More anomaly events = higher ranking                                │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  Implementation Details:
+  - Framework: Python 3.7.13, PyTorch 1.10.0, DGL 0.9.0
+  - Hardware: 12× Intel Xeon E5-2650 v4 @ 2.20GHz, 128G RAM (no GPU)
+  - fastText dimension: 100
+  - GNN layers: ≤3 (more layers hurt performance)
+  - Augmentation size: 1000 samples per class
+
+  ---
+  DiagFusion Results on Benchmarks
+
+  Task #1: Root Cause Instance Localization
+  ┌────────────┬──────────┬──────────┬──────────┐
+  │   Method   │ Modality │ D1 Avg@5 │ D2 Avg@5 │
+  ├────────────┼──────────┼──────────┼──────────┤
+  │ MicroHECL  │ Trace    │ 0.16     │ 0.11     │
+  ├────────────┼──────────┼──────────┼──────────┤
+  │ MicroRank  │ Trace    │ 0.30     │ 0.18     │
+  ├────────────┼──────────┼──────────┼──────────┤
+  │ AutoMAP    │ Metric   │ 0.26     │ 0.33     │
+  ├────────────┼──────────┼──────────┼──────────┤
+  │ MS-Rank    │ Metric   │ 0.49     │ 0.57     │
+  ├────────────┼──────────┼──────────┼──────────┤
+  │ PDiagnose  │ All 3    │ 0.62     │ 0.34     │
+  ├────────────┼──────────┼──────────┼──────────┤
+  │ DiagFusion │ All 3    │ 0.75     │ 0.76     │
+  └────────────┴──────────┴──────────┴──────────┘
+  Improvement: 20.9% to 368% over baselines
+
+  Task #2: Failure Type Determination
+  ┌────────────┬─────────────┬─────────────┐
+  │   Method   │ D1 F1-score │ D2 F1-score │
+  ├────────────┼─────────────┼─────────────┤
+  │ Cloud19    │ 0.756       │ 0.297       │
+  ├────────────┼─────────────┼─────────────┤
+  │ LogCluster │ 0.336       │ 0.605       │
+  ├────────────┼─────────────┼─────────────┤
+  │ CloudRCA   │ 0.357       │ 0.538       │
+  ├────────────┼─────────────┼─────────────┤
+  │ DiagFusion │ 0.839       │ 0.800       │
+  └────────────┴─────────────┴─────────────┘
+  Improvement: 11.0% to 169% over baselines
+
+  Ablation Study Results:
+  ┌─────────────────────────────┬──────────┬───────┬──────────┬───────┐
+  │           Variant           │ D1 Avg@5 │ D1 F1 │ D2 Avg@5 │ D2 F1 │
+  ├─────────────────────────────┼──────────┼───────┼──────────┼───────┤
+  │ DiagFusion (full)           │ 0.750    │ 0.839 │ 0.790    │ 0.800 │
+  ├─────────────────────────────┼──────────┼───────┼──────────┼───────┤
+  │ w/o Data Augmentation       │ 0.641    │ 0.779 │ 0.471    │ 0.576 │
+  ├─────────────────────────────┼──────────┼───────┼──────────┼───────┤
+  │ w/o fastText (use word2vec) │ 0.594    │ 0.768 │ 0.780    │ 0.753 │
+  ├─────────────────────────────┼──────────┼───────┼──────────┼───────┤
+  │ w/o GNN (use Decision Tree) │ 0.616    │ 0.104 │ 0.587    │ 0.639 │
+  └─────────────────────────────┴──────────┴───────┴──────────┴───────┘
+  Efficiency:
+  - Training time: 11.02s (D1), 3.59s (D2)
+  - Online diagnosis: 10.95s (D1), 3.26s (D2) per failure
+
+  ---
+  Part 3: Our Improvements and Expected Results
+
+  What We Change From DiagFusion
+  ┌────────────────────┬───────────────────────┬─────────────────────────────────┬─────────────────────────────────────────────────┐
+  │     Component      │      DiagFusion       │         Our Enhancement         │                Expected Benefit                 │
+  ├────────────────────┼───────────────────────┼─────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ Multi-modal Fusion │ fastText embedding    │ CMEA (contrastive learning)     │ +5-8% accuracy from better cross-modal patterns │
+  ├────────────────────┼───────────────────────┼─────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ Graph Learning     │ GNN (correlation)     │ INGD (Neural Granger causality) │ +3-5% accuracy from true causal discovery       │
+  ├────────────────────┼───────────────────────┼─────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ Interpretability   │ None                  │ Relevance propagation           │ Operators can verify and trust results          │
+  ├────────────────────┼───────────────────────┼─────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ Ranking            │ Event count heuristic │ Personalized PageRank           │ +2-4% accuracy from principled ranking          │
+  ├────────────────────┼───────────────────────┼─────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ Confidence         │ Raw softmax           │ Temperature scaling             │ Calibrated (reliable) confidence scores         │
+  ├────────────────────┼───────────────────────┼─────────────────────────────────┼─────────────────────────────────────────────────┤
+  │ Explanations       │ None                  │ Natural language                │ Faster human decision-making                    │
+  └────────────────────┴───────────────────────┴─────────────────────────────────┴─────────────────────────────────────────────────┘
+  Datasets We Will Use
+
+  Primary: RCAEval Benchmark (WWW 2025)
+  ┌─────────┬────────────────┬─────────────────────────────┬────────────┐
+  │ Dataset │     System     │        Failure Types        │ # Failures │
+  ├─────────┼────────────────┼─────────────────────────────┼────────────┤
+  │ RE1     │ Sock Shop      │ CPU, Memory, Network, Disk  │ 180        │
+  ├─────────┼────────────────┼─────────────────────────────┼────────────┤
+  │ RE2     │ Train Ticket   │ CPU, Memory, Network, Delay │ 270        │
+  ├─────────┼────────────────┼─────────────────────────────┼────────────┤
+  │ RE3     │ Social Network │ Various                     │ 150        │
+  └─────────┴────────────────┴─────────────────────────────┴────────────┘
+  Secondary: GAIA (same as DiagFusion D1)
+  - For direct comparison with DiagFusion
+
+  Expected Results
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    EXPECTED RESULTS                                     │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  TASK #1: Root Cause Localization (Avg@5)                              │
+  │  ─────────────────────────────────────────                             │
+  │                                                                         │
+  │  Dataset      │ DiagFusion │ Expected (Ours) │ Improvement             │
+  │  ─────────────┼────────────┼─────────────────┼───────────────          │
+  │  GAIA (D1)    │   0.75     │   0.80-0.83     │   +5-8%                 │
+  │  RCAEval RE1  │   ~0.70*   │   0.78-0.82     │   +8-12%                │
+  │  RCAEval RE2  │   ~0.68*   │   0.76-0.80     │   +8-12%                │
+  │                                                                         │
+  │  * Estimated based on similar methods                                  │
+  │                                                                         │
+  │  ──────────────────────────────────────────────────────────────────    │
+  │                                                                         │
+  │  TASK #2: Failure Type Determination (F1-score)                        │
+  │  ──────────────────────────────────────────────                        │
+  │                                                                         │
+  │  Dataset      │ DiagFusion │ Expected (Ours) │ Improvement             │
+  │  ─────────────┼────────────┼─────────────────┼───────────────          │
+  │  GAIA (D1)    │   0.839    │   0.87-0.89     │   +3-5%                 │
+  │  Bank (D2)    │   0.800    │   0.83-0.86     │   +3-6%                 │
+  │                                                                         │
+  │  ──────────────────────────────────────────────────────────────────    │
+  │                                                                         │
+  │  NEW METRICS (our contributions enable):                               │
+  │  ─────────────────────────────────────                                 │
+  │                                                                         │
+  │  Metric                    │ DiagFusion │ Expected (Ours)              │
+  │  ─────────────────────────┼────────────┼─────────────────              │
+  │  Calibration Error (ECE)   │   N/A      │   < 0.05                     │
+  │  Explanation Quality       │   N/A      │   User study: 4.2/5         │
+  │  Time to Understand        │   ~5 min   │   < 30 seconds              │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  Contribution Breakdown by Expected Improvement
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    WHERE IMPROVEMENTS COME FROM                         │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  Total Expected Improvement: +8-12% on Avg@5                           │
+  │                                                                         │
+  │  ┌────────────────────────────────────────────────────────────────┐    │
+  │  │                                                                │    │
+  │  │  CMEA (Member A): +3-4%                                       │    │
+  │  │  ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    │    │
+  │  │  From: Better cross-modal alignment, captures patterns        │    │
+  │  │        that fastText misses                                   │    │
+  │  │                                                                │    │
+  │  │  INGD (Member B): +3-5%                                       │    │
+  │  │  █████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    │    │
+  │  │  From: Causal discovery finds TRUE root cause, not just       │    │
+  │  │        correlated symptoms                                    │    │
+  │  │                                                                │    │
+  │  │  CCRE (Member C): +2-3%                                       │    │
+  │  │  ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    │    │
+  │  │  From: Principled ranking (PageRank) vs heuristic (event     │    │
+  │  │        count); also enables calibration + explanations        │    │
+  │  │                                                                │    │
+  │  └────────────────────────────────────────────────────────────────┘    │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  Summary Table
+  ┌────────────────────┬─────────────────────┬──────────────────────────────┬────────────────────────┐
+  │       Aspect       │  DiagFusion (Base)  │         Our Project          │    Paper Reference     │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Multi-modal Fusion │ fastText            │ Contrastive learning (CMEA)  │ FOCAL, Nezha, MULAN    │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Causal Discovery   │ None (GNN patterns) │ Neural Granger (INGD)        │ RUN, CausalFormer      │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Interpretability   │ None                │ Relevance propagation (INGD) │ CausalFormer           │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Ranking            │ Event count         │ PageRank (CCRE)              │ RUN                    │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Calibration        │ None                │ Temperature scaling (CCRE)   │ Calibration literature │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Explanations       │ None                │ NL generation (CCRE)         │ Novel                  │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Expected Avg@5     │ 0.75                │ 0.80-0.83                    │ -                      │
+  ├────────────────────┼─────────────────────┼──────────────────────────────┼────────────────────────┤
+  │ Expected F1        │ 0.84                │ 0.87-0.89                    │ -                      │
+  └────────────────────┴─────────────────────┴──────────────────────────────┴────────────────────────┘

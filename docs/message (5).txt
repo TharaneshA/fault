@@ -1,0 +1,462 @@
+● Got it! CMEA stays as MULAN-style contrastive learning, and we include the other improvements (Hierarchical Neural Granger, Hypergraphs, HDBSCAN clustering, RAG explanations). Here's the final PPT:
+
+  ---
+  Final PPT: Multi-Modal Root Cause Analysis for Microservices
+
+  ---
+  Slide 1: Title Slide
+
+  Multi-Modal Root Cause Analysis for Microservices
+
+  - Registration Number: [YOUR REG NO]
+  - Student Name: Tharanesh A
+  - Guide Name: Dr. [GUIDE NAME]
+
+  [Guide Signature placeholder]
+
+  ---
+  Slide 2: Problem Statement
+
+  - Microservice failures generate fragmented observability signals across metrics, logs, and traces
+  - 82% of organizations report MTTR > 1 hour during incidents (up from 47% in 2021) ¹
+  - 48% cite lack of team knowledge as biggest challenge ¹
+  - Existing multi-modal RCA methods lack:
+    - Scalability — fail on systems with 200+ metrics
+    - Multi-way causality — only capture pairwise (A→B) relationships
+    - Interpretability — "Why is this the root cause?"
+
+  [IMAGE PLACEHOLDER: Fragmented alerts diagram with confused SRE]
+
+  Sources: ¹ https://logz.io/observability-pulse-2024/
+
+  ---
+  Slide 3: Problem Background
+
+  MTTR Trend (Industry Survey):
+  ┌──────┬───────────────┬──────────┐
+  │ Year │ MTTR > 1 hour │  Change  │
+  ├──────┼───────────────┼──────────┤
+  │ 2021 │ 47%           │ Baseline │
+  ├──────┼───────────────┼──────────┤
+  │ 2022 │ 64%           │ +17%     │
+  ├──────┼───────────────┼──────────┤
+  │ 2023 │ 74%           │ +10%     │
+  ├──────┼───────────────┼──────────┤
+  │ 2024 │ 82%           │ +8%      │
+  └──────┴───────────────┴──────────┘
+  Key Challenges:
+  - 86% say data volume is beyond human ability to manage ²
+  - Organizations use average 10 monitoring tools ²
+  - 51% cite observability as top cloud-native challenge ³
+
+  Why Single-Modality Fails:
+  - Metrics-only: Sees CPU spike, misses memory leak cause
+  - Logs-only: Sees ERROR, misses thread pool exhaustion
+  - Traces-only: Sees latency, misses config change
+
+  Sources:
+  ¹ https://logz.io/observability-pulse-2024/
+  ² https://www.dynatrace.com/info/reports/state-of-observability-2024/
+  ³ https://www.cncf.io/reports/cncf-annual-survey-2024/
+
+  ---
+  Slide 4: Literature Survey (1/2)
+  ┌─────┬────────────┬───────────────┬────────────────────────────────────────────┐
+  │  #  │   Paper    │     Venue     │              Key Contribution              │
+  ├─────┼────────────┼───────────────┼────────────────────────────────────────────┤
+  │ 1   │ DiagFusion │ IEEE TSC 2023 │ Multi-modal GNN classification (our base)  │
+  ├─────┼────────────┼───────────────┼────────────────────────────────────────────┤
+  │ 2   │ MULAN      │ WWW 2024      │ Contrastive learning + KPI-aware attention │
+  ├─────┼────────────┼───────────────┼────────────────────────────────────────────┤
+  │ 3   │ Nezha      │ FSE 2023      │ Event graphs, 89.77% Top-1 accuracy        │
+  ├─────┼────────────┼───────────────┼────────────────────────────────────────────┤
+  │ 4   │ RUN        │ AAAI 2024     │ Neural Granger causal discovery + PageRank │
+  ├─────┼────────────┼───────────────┼────────────────────────────────────────────┤
+  │ 5   │ CHASE      │ arXiv 2024    │ Hypergraph-based multi-way causality       │
+  └─────┴────────────┴───────────────┴────────────────────────────────────────────┘
+  ---
+  Slide 5: Literature Survey (2/2)
+  ┌─────┬────────────────┬──────────────┬──────────────────────────────────────────────┐
+  │  #  │     Paper      │    Venue     │               Key Contribution               │
+  ├─────┼────────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ 6   │ RCD            │ NeurIPS 2022 │ Divide-and-conquer scalable causal discovery │
+  ├─────┼────────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ 7   │ Sleuth         │ ASPLOS 2023  │ HDBSCAN trace clustering for large-scale     │
+  ├─────┼────────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ 8   │ Chain-of-Event │ FSE 2024     │ Weighted causal graphs from incidents        │
+  ├─────┼────────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ 9   │ BARO           │ FSE 2024     │ Bayesian online change point detection       │
+  ├─────┼────────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ 10  │ RCAEval        │ ASE 2024     │ Benchmark: 735 failure cases, 15 baselines   │
+  └─────┴────────────────┴──────────────┴──────────────────────────────────────────────┘
+  ---
+  Slide 6: Existing Solutions & Gaps
+  ┌───────────────────┬───────────────────────────┬──────────────────────────────────────────────────────────┐
+  │      Method       │         Approach          │                       Limitations                        │
+  ├───────────────────┼───────────────────────────┼──────────────────────────────────────────────────────────┤
+  │ DiagFusion (Base) │ GNN on multi-modal events │ No causal reasoning, no interpretability, uncalibrated   │
+  ├───────────────────┼───────────────────────────┼──────────────────────────────────────────────────────────┤
+  │ MULAN             │ Contrastive + Random Walk │ No trace handling, pairwise graphs only, no explanations │
+  ├───────────────────┼───────────────────────────┼──────────────────────────────────────────────────────────┤
+  │ RUN               │ Neural Granger + PageRank │ Scalability issues (200+ metrics)                        │
+  ├───────────────────┼───────────────────────────┼──────────────────────────────────────────────────────────┤
+  │ Dynatrace Davis   │ Topology-based AI         │ False positives in K8s, proprietary                      │
+  ├───────────────────┼───────────────────────────┼──────────────────────────────────────────────────────────┤
+  │ Datadog Watchdog  │ Unsupervised ML           │ No causal reasoning, threshold tuning needed             │
+  └───────────────────┴───────────────────────────┴──────────────────────────────────────────────────────────┘
+  Gaps We Address:
+  1. ❌ Scalability — No method handles 200+ metrics efficiently
+  2. ❌ Multi-way causality — All use pairwise graphs (A→B), miss cascades
+  3. ❌ Interpretability — No natural language explanations with calibration
+
+  ---
+  Slide 7: Proposed Solution — Overview
+
+  Three-Component Framework Extending DiagFusion:
+  ┌───────────┬────────────────────────────────────────────────────┬───────────────────┐
+  │ Component │                      Function                      │     Based On      │
+  ├───────────┼────────────────────────────────────────────────────┼───────────────────┤
+  │ CMEA      │ Contrastive Multi-modal Event Alignment            │ MULAN (WWW 2024)  │
+  ├───────────┼────────────────────────────────────────────────────┼───────────────────┤
+  │ INGD      │ Hierarchical Neural Granger Discovery + Hypergraph │ RUN + RCD + CHASE │
+  ├───────────┼────────────────────────────────────────────────────┼───────────────────┤
+  │ CCRE      │ Calibrated Ranking with RAG-augmented Explanations │ PageRank + LLM    │
+  └───────────┴────────────────────────────────────────────────────┴───────────────────┘
+  Key Innovations:
+  1. Scalable causal discovery — Hierarchical divide-and-conquer approach
+  2. Hypergraph structure — Captures multi-way cascading failures
+  3. RAG-augmented explanations — Domain-specific, historically grounded
+
+  [IMAGE PLACEHOLDER: Architecture diagram showing full pipeline]
+
+  ---
+  Slide 8: CMEA — Contrastive Multi-modal Alignment
+
+  Member A's Contribution
+
+  Approach (MULAN-style):
+  - Log-tailored language model converts logs → time-series
+  - Contrastive learning extracts:
+    - Modality-invariant features (shared across metrics/logs/traces)
+    - Modality-specific features (unique to each modality)
+  - KPI-aware attention weighs modality reliability
+
+  Architecture:
+  Metrics ──→ Encoder ──→ M_emb ─┐
+  Logs ────→ Log LM ───→ L_emb ──┼─→ Contrastive Loss → Aligned Embeddings
+  Traces ──→ Encoder ──→ T_emb ─┘
+
+  Why Contrastive Learning:
+  - Learns what's common across modalities (shared fault signatures)
+  - Preserves what's unique (modality-specific evidence)
+
+  Based on: MULAN (WWW 2024), FOCAL (NeurIPS 2023)
+
+  ---
+  Slide 9: INGD — Scalable Causal Discovery
+
+  Member B's Contribution
+
+  Problem: Neural Granger fails on large systems (200+ metrics)
+
+  Solution: Hierarchical Divide-and-Conquer (RCD-style)
+
+  Full System (200+ metrics)
+           ↓
+  ┌────────┴────────┐
+  Cluster by Service (20-30 each)
+           ↓
+  Run Neural Granger on each cluster
+           ↓
+  Merge local root cause candidates
+           ↓
+  Final Neural Granger on candidates only
+           ↓
+  Hypergraph Construction
+
+  Hypergraph Innovation (CHASE-style):
+  - Regular edge: A → B (pairwise only)
+  - Hyperedge: {A, B, C, D} (captures entire cascade)
+
+  Why Hypergraphs:
+  "36.2% higher accuracy than best baseline" — CHASE (2024)
+
+  Based on: RCD (NeurIPS 2022), RUN (AAAI 2024), CHASE (2024)
+
+  ---
+  Slide 10: CCRE — Calibrated Explanations
+
+  Member C's Contribution
+
+  Three Sub-components:
+  ┌─────────────────────┬────────────────────────────────────────────────────────────┐
+  │      Component      │                          Function                          │
+  ├─────────────────────┼────────────────────────────────────────────────────────────┤
+  │ PageRank Ranking    │ Personalized random walk on hypergraph                     │
+  ├─────────────────────┼────────────────────────────────────────────────────────────┤
+  │ Temperature Scaling │ Calibrate confidence (94% means ~94% accurate)             │
+  ├─────────────────────┼────────────────────────────────────────────────────────────┤
+  │ RAG Explanations    │ Retrieve similar past incidents, LLM generates explanation │
+  └─────────────────────┴────────────────────────────────────────────────────────────┘
+  RAG-Augmented Flow:
+  New Incident → Embed → Search Vector DB → Retrieve Similar Cases
+                                                ↓
+                                LLM + Retrieved Context → Explanation
+                                                ↓
+                                "Similar to Incident #42 from last month..."
+
+  Why RAG over Plain LLM:
+  - Domain-specific explanations from your system's history
+  - Operators can verify against known incidents
+  - Confidence improves with historical data
+
+  Based on: RUN (AAAI 2024), Zhang et al. confidence framework (2023)
+
+  ---
+  Slide 11: Scalability Strategy
+
+  How We Handle Large-Scale Systems:
+  ┌───────────────────────────────┬────────────────────┬──────────────────────────────────┐
+  │           Technique           │       Where        │             Benefit              │
+  ├───────────────────────────────┼────────────────────┼──────────────────────────────────┤
+  │ HDBSCAN Trace Clustering      │ Before CMEA        │ 100x fewer traces to process     │
+  ├───────────────────────────────┼────────────────────┼──────────────────────────────────┤
+  │ Hierarchical Causal Discovery │ INGD               │ 10x faster, handles 200+ metrics │
+  ├───────────────────────────────┼────────────────────┼──────────────────────────────────┤
+  │ Hypergraph Pruning            │ Graph construction │ Focus on high-anomaly regions    │
+  └───────────────────────────────┴────────────────────┴──────────────────────────────────┘
+  HDBSCAN Trace Clustering (Sleuth-style):
+  Millions of traces
+         ↓
+  Extract features (latency, errors, call depth)
+         ↓
+  HDBSCAN clustering (no predefined k)
+         ↓
+  Analyze cluster representatives only
+         ↓
+  Propagate findings to cluster members
+
+  Why HDBSCAN:
+  - Handles varying density (rare failure patterns)
+  - Automatically identifies noise/outliers
+  - No need to specify number of clusters
+
+  Based on: Sleuth (ASPLOS 2023)
+
+  ---
+  Slide 12: Architecture Diagram
+
+  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+  │   Metrics   │   │    Logs     │   │   Traces    │
+  └──────┬──────┘   └──────┬──────┘   └──────┬──────┘
+         │                 │                 │
+         │                 │                 ▼
+         │                 │         ┌──────────────┐
+         │                 │         │   HDBSCAN    │
+         │                 │         │  Clustering  │
+         │                 │         └──────┬───────┘
+         │                 │                 │
+         ▼                 ▼                 ▼
+  ┌────────────────────────────────────────────────┐
+  │          CMEA: Contrastive Alignment           │
+  │    (Modality-invariant + Modality-specific)    │
+  └─────────────────────┬──────────────────────────┘
+                        │
+                        ▼
+  ┌────────────────────────────────────────────────┐
+  │     INGD: Hierarchical Neural Granger          │
+  │   (Divide-Conquer + Local Causal Discovery)    │
+  └─────────────────────┬──────────────────────────┘
+                        │
+                        ▼
+  ┌────────────────────────────────────────────────┐
+  │         Hypergraph Causal Structure            │
+  │      (Multi-way causality, not pairwise)       │
+  └─────────────────────┬──────────────────────────┘
+                        │
+                        ▼
+  ┌────────────────────────────────────────────────┐
+  │    CCRE: PageRank + Calibration + RAG + LLM    │
+  └─────────────────────┬──────────────────────────┘
+                        │
+                        ▼
+          ┌─────────────────────────┐
+          │   Root Cause + Score    │
+          │   + NL Explanation      │
+          │   + Historical Context  │
+          └─────────────────────────┘
+
+  [IMAGE PLACEHOLDER: Professional flowchart version]
+
+  ---
+  Slide 13: Project Scope
+
+  In Scope:
+  - Multi-modal data ingestion (metrics, traces, logs)
+  - HDBSCAN trace clustering for scalability
+  - Contrastive embedding alignment (CMEA)
+  - Hierarchical Neural Granger causal discovery (INGD)
+  - Hypergraph construction for multi-way causality
+  - PageRank ranking with confidence calibration (CCRE)
+  - RAG-augmented LLM explanations
+  - Evaluation on RCAEval (735 cases) and GAIA datasets
+  - Demo UI (Fault.ai)
+
+  Out of Scope:
+  - Real-time production deployment at scale
+  - Custom instrumentation agents
+  - Commercial tool API integrations
+
+  ---
+  Slide 14: Expected Results
+
+  Baseline Comparisons:
+  ┌───────────────────┬─────────────────────┬─────────────┐
+  │      Method       │       Metric        │ Performance │
+  ├───────────────────┼─────────────────────┼─────────────┤
+  │ DiagFusion (base) │ Avg@5 on GAIA       │ 0.75        │
+  ├───────────────────┼─────────────────────┼─────────────┤
+  │ MULAN             │ MRR on Train-Ticket │ SOTA        │
+  ├───────────────────┼─────────────────────┼─────────────┤
+  │ CHASE             │ A@1 on GAIA         │ 61.35%      │
+  ├───────────────────┼─────────────────────┼─────────────┤
+  │ RCAEval SOTA      │ Top-1               │ 42.22%      │
+  └───────────────────┴─────────────────────┴─────────────┘
+  Our Expected Improvements:
+  ┌───────────────────────┬───────────────────────┬─────────────────────┐
+  │      Improvement      │        Source         │    Expected Gain    │
+  ├───────────────────────┼───────────────────────┼─────────────────────┤
+  │ Hypergraph structure  │ CHASE showed 36% gain │ +10-15% accuracy    │
+  ├───────────────────────┼───────────────────────┼─────────────────────┤
+  │ Hierarchical scaling  │ RCD approach          │ Handle 200+ metrics │
+  ├───────────────────────┼───────────────────────┼─────────────────────┤
+  │ Trace clustering      │ Sleuth                │ 100x throughput     │
+  ├───────────────────────┼───────────────────────┼─────────────────────┤
+  │ Calibrated confidence │ Novel                 │ ECE < 0.05          │
+  ├───────────────────────┼───────────────────────┼─────────────────────┤
+  │ RAG explanations      │ Novel                 │ Operator-verifiable │
+  └───────────────────────┴───────────────────────┴─────────────────────┘
+  Target: Exceed DiagFusion by 8-12%, match/exceed MULAN with better interpretability
+
+  ---
+  Slide 15: Team Contributions
+  ┌──────────┬───────────┬─────────────────────────────────────────────────────────────────────────────────────┐
+  │  Member  │ Component │                                Key Responsibilities                                 │
+  ├──────────┼───────────┼─────────────────────────────────────────────────────────────────────────────────────┤
+  │ Member A │ CMEA      │ Contrastive embedding, log-tailored LM, KPI-aware attention, modality alignment     │
+  ├──────────┼───────────┼─────────────────────────────────────────────────────────────────────────────────────┤
+  │ Member B │ INGD      │ Hierarchical Neural Granger, divide-conquer implementation, hypergraph construction │
+  ├──────────┼───────────┼─────────────────────────────────────────────────────────────────────────────────────┤
+  │ Member C │ CCRE      │ PageRank ranking, temperature scaling, RAG pipeline, LLM prompt engineering         │
+  └──────────┴───────────┴─────────────────────────────────────────────────────────────────────────────────────┘
+  Shared:
+  - HDBSCAN trace clustering implementation
+  - Benchmark setup (RCAEval, GAIA, Train-Ticket)
+  - Evaluation pipeline
+  - Demo UI (Fault.ai)
+
+  ---
+  Slide 16: Timeline & Milestones
+  ┌─────────┬──────────────────────────────────────────────────────────────────┬───────────────────────────────────┐
+  │  Phase  │                              Tasks                               │            Deliverable            │
+  ├─────────┼──────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ Phase 1 │ Literature review, benchmark setup (Train-Ticket, RCAEval, GAIA) │ Datasets ready, baselines running │
+  ├─────────┼──────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ Phase 2 │ HDBSCAN trace clustering + CMEA implementation                   │ Scalable embedding module         │
+  ├─────────┼──────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ Phase 3 │ INGD: Hierarchical Neural Granger + Hypergraph                   │ Causal discovery module           │
+  ├─────────┼──────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ Phase 4 │ CCRE: PageRank + Calibration + RAG + LLM                         │ Ranking & explanation module      │
+  ├─────────┼──────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ Phase 5 │ Integration, ablation studies, comparison with 15+ baselines     │ Performance metrics               │
+  ├─────────┼──────────────────────────────────────────────────────────────────┼───────────────────────────────────┤
+  │ Phase 6 │ Demo UI (Fault.ai), documentation, presentation                  │ Working demo + report             │
+  └─────────┴──────────────────────────────────────────────────────────────────┴───────────────────────────────────┘
+  [IMAGE PLACEHOLDER: Gantt chart]
+
+  ---
+  Slide 17: Tools & Technologies
+  ┌──────────────────┬──────────────────────────────────────────────┐
+  │     Category     │                 Technologies                 │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Languages        │ Python 3.10+, TypeScript                     │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ ML Frameworks    │ PyTorch, scikit-learn, NetworkX              │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Embeddings       │ FastText, Sentence-BERT, Drain (log parsing) │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Causal Discovery │ gCastle, NOTEARS, Neural Granger             │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Clustering       │ HDBSCAN                                      │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Graph            │ HyperNetX (hypergraphs), NetworkX            │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ LLM              │ GPT-4 / Claude for explanations              │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Vector DB        │ ChromaDB / Pinecone (for RAG)                │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Observability    │ OpenTelemetry, Jaeger                        │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Benchmarks       │ RCAEval (735 cases), GAIA, Train-Ticket      │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Frontend         │ React, Next.js, ReactFlow                    │
+  ├──────────────────┼──────────────────────────────────────────────┤
+  │ Infrastructure   │ Docker, Kubernetes                           │
+  └──────────────────┴──────────────────────────────────────────────┘
+  ---
+  Slide 18: References
+
+  1. DiagFusion — IEEE TSC 2023 — https://nkcs.iops.ai/wp-content/uploads/2023/12/TSC23-DiagFusion.pdf
+  2. MULAN — WWW 2024 — https://dl.acm.org/doi/10.1145/3589334.3645442
+  3. RUN — AAAI 2024 — https://arxiv.org/abs/2402.01140
+  4. CHASE — 2024 — https://arxiv.org/abs/2406.19711
+  5. RCD — NeurIPS 2022 — https://proceedings.neurips.cc/paper_files/paper/2022/file/c9fcd02e6445c7dfbad6986abee53d0d-Paper-Conference.pdf
+  6. Sleuth — ASPLOS 2023 — https://dl.acm.org/doi/10.1145/3623278.3624758
+  7. Nezha — FSE 2023
+  8. RCAEval — ASE 2024 — https://arxiv.org/abs/2408.13729
+  9. Comprehensive RCA Survey — https://arxiv.org/abs/2408.00803
+  10. Logz.io Observability Pulse 2024 — https://logz.io/observability-pulse-2024/
+
+  ---
+  Slide Explanations (What to Say)
+
+  Slide 2: Problem Statement
+
+  "When a microservice fails, it generates alerts across metrics, logs, and traces. 82% of organizations take over an hour to resolve incidents, up from just 47% in 2021. The problem isn't lack of data — it's lack of correlation. Current methods have three gaps: they don't scale to real systems with 200+ metrics, they only capture simple A-causes-B relationships missing multi-service cascades, and they can't explain WHY something is the root cause. Our project addresses all three."
+
+  Slide 6: Existing Solutions
+
+  "DiagFusion is our base paper — it uses GNN on multi-modal events but lacks causal reasoning and interpretability. MULAN from WWW 2024 adds contrastive learning but still uses pairwise graphs and doesn't handle traces explicitly. RUN uses Neural Granger which is good for causality but struggles at scale. Commercial tools like Dynatrace have false positive issues in Kubernetes environments. The three gaps across all methods are: scalability, multi-way causality, and interpretability."
+
+  Slide 7: Proposed Solution
+
+  "We extend DiagFusion with three components. CMEA uses MULAN-style contrastive learning for multi-modal alignment. INGD combines Neural Granger with a hierarchical divide-and-conquer approach from RCD to handle scale, then builds hypergraphs from CHASE to capture multi-way cascades. CCRE uses PageRank on the hypergraph, calibrates confidence scores, and generates explanations using retrieval-augmented generation with historical incidents."
+
+  Slide 9: INGD
+
+  "The key innovation here is solving scalability. Neural Granger alone fails on 200+ metrics. We use RCD's approach: split metrics by service into small clusters, run Neural Granger locally on each, merge candidates, and recursively process until we find the root cause. Then instead of a regular graph, we build a hypergraph where each hyperedge captures an entire cascade path — not just A-to-B but the whole chain A-B-C-D together. CHASE showed this gives 36% better accuracy."
+
+  Slide 10: CCRE
+
+  "For explanations, we don't just prompt an LLM directly. We use retrieval-augmented generation — when a new incident occurs, we search a vector database of past incidents, retrieve similar cases, and give that context to the LLM. This means explanations reference your actual system history: 'This is similar to the CPU saturation incident last month in ts-order-service.' Operators can verify against known incidents, and confidence improves with more historical data."
+
+  Slide 11: Scalability
+
+  "Three techniques make this scale. First, HDBSCAN clustering reduces millions of traces to cluster representatives — from Sleuth at ASPLOS 2023. Second, hierarchical causal discovery from RCD means we don't build the full causal graph — we divide and conquer. Third, hypergraph pruning focuses analysis on high-anomaly regions. Together, these let us handle Train-Ticket's 212 metrics where other methods fail."
+
+  ---
+  Images/Flowcharts to Generate:
+
+  1. Slide 2: Fragmented alerts diagram (multiple dashboards, confused SRE)
+  2. Slide 7: High-level architecture overview (3 components)
+  3. Slide 9: Hierarchical divide-and-conquer diagram + Hypergraph vs Regular graph comparison
+  4. Slide 10: RAG pipeline flowchart
+  5. Slide 11: Scalability techniques comparison
+  6. Slide 12: [CRITICAL] Full architecture flowchart (professional version)
+  7. Slide 16: Gantt chart timeline
+
+  ---
+  This is the final PPT content. Do you want me to:
+  1. Provide specific diagram descriptions for each image placeholder?
+  2. Add more detail to any specific slide?
+  3. Create a one-page summary you can use as a handout?

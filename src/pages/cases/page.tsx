@@ -1,8 +1,17 @@
 import { cn } from "@/lib/utils"
-import { Search, SlidersHorizontal, Plus, Check, Clock, Loader2 } from "lucide-react"
+import { Search, SlidersHorizontal, Plus, Check, Clock, Loader2, Radio } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 const cases = [
+  {
+    id: "LIVE-001",
+    service: "synthetic-dataset",
+    faultType: "Latency Spike",
+    timestamp: "Live",
+    status: "live",
+    rootCause: null,
+    confidence: null,
+  },
   {
     id: "RE2-047",
     service: "ts-order-service",
@@ -82,6 +91,7 @@ const faultColors: Record<string, string> = {
   "Memory Leak": "text-violet-500",
   "Network Delay": "text-blue-500",
   "Pod Failure": "text-red-500",
+  "Latency Spike": "text-emerald-500",
 }
 
 const faultDots: Record<string, string> = {
@@ -89,6 +99,7 @@ const faultDots: Record<string, string> = {
   "Memory Leak": "bg-violet-500",
   "Network Delay": "bg-blue-500",
   "Pod Failure": "bg-red-500",
+  "Latency Spike": "bg-emerald-500",
 }
 
 function StatusIcon({ status }: { status: string }) {
@@ -97,6 +108,8 @@ function StatusIcon({ status }: { status: string }) {
       return <Check className="h-3.5 w-3.5 text-emerald-500" />
     case "analyzing":
       return <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-500" />
+    case "live":
+      return <Radio className="h-3.5 w-3.5 animate-pulse text-emerald-500" />
     default:
       return <Clock className="h-3.5 w-3.5 text-app-muted" />
   }
@@ -169,9 +182,17 @@ export default function CasesPage() {
             <button
               key={c.id}
               onClick={() => navigate(`/analysis/${c.id}`)}
-              className="grid w-full grid-cols-[80px_1fr_140px_120px_60px_1fr_80px] gap-4 px-4 py-3 text-left transition-colors hover:bg-app-surface-hover"
+              className={cn(
+                "grid w-full grid-cols-[80px_1fr_140px_120px_60px_1fr_80px] gap-4 px-4 py-3 text-left transition-colors hover:bg-app-surface-hover",
+                c.status === "live" && "bg-emerald-500/5"
+              )}
             >
-              <div className="text-[13px] font-medium text-app">{c.id}</div>
+              <div className="flex items-center gap-1.5 text-[13px] font-medium text-app">
+                {c.status === "live" && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                )}
+                {c.id}
+              </div>
               <div className="truncate font-mono text-[12px] text-app-secondary">
                 {c.service}
               </div>
@@ -186,7 +207,9 @@ export default function CasesPage() {
                 <StatusIcon status={c.status} />
               </div>
               <div className="truncate font-mono text-[12px] text-app-secondary">
-                {c.rootCause || "—"}
+                {c.rootCause || (c.status === "live" ? (
+                  <span className="text-emerald-500">Run live analysis</span>
+                ) : "—")}
               </div>
               <div className="text-right">
                 {c.confidence ? (

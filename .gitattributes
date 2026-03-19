@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Force LF line endings on macOS/Linux sidecar scripts (CRLF breaks bash)
+src-tauri/binaries/fault-backend-aarch64-apple-darwin text eol=lf
+src-tauri/binaries/fault-backend-x86_64-apple-darwin text eol=lf
