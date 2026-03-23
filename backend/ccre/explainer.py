@@ -39,7 +39,7 @@ class CCREExplainer:
             if api_key:
                 genai.configure(api_key=api_key)
                 self._model = genai.GenerativeModel(self.config.model)
-                logger.info(f"CCRE initialized with {self.config.model}")
+                logger.info(f"LLM Explanation Engine initialized (model: {self.config.model})")
             else:
                 logger.warning("GEMINI_API_KEY not set. CCRE will return mock explanations.")
 
@@ -108,27 +108,20 @@ Important:
 
     def _parse_response(self, response_text: str) -> ExplanationResult:
         """Parse LLM response into structured format."""
-        import re
-        self.last_raw_response = response_text # Store raw response for debugging
+        self.last_raw_response = response_text
         try:
-            # Clean up response - search for the JSON object within the text
-            # This is more robust than startswith("```")
-            match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if match:
-                cleaned = match.group(0)
-            else:
-                cleaned = response_text.strip()
-                # Still try markdown cleanup as fallback
-                if cleaned.startswith("```"):
-                    lines = cleaned.split("\n")
-                    lines = [l for l in lines if not l.strip().startswith("```")]
-                    cleaned = "\n".join(lines)
-
-            data = json.loads(cleaned)
+            data = json.loads(response_text)
             return ExplanationResult(**data)
         except (json.JSONDecodeError, ValueError) as e:
-            logger.error(f"Failed to parse LLM response: {e}")
-            logger.debug(f"Raw response: {response_text}")
+            logger.error(f"Failed to parse structured LLM response: {e}")
+            # Fallback to regex if somehow we still get text
+            import re
+            match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if match:
+                try:
+                    return ExplanationResult(**json.loads(match.group(0)))
+                except:
+                    pass
             return self._get_mock_explanation()
 
     def _get_mock_explanation(self, analysis_result: Optional[dict] = None) -> ExplanationResult:
@@ -166,7 +159,7 @@ Important:
     async def explain(self, analysis_result: dict) -> ExplanationResult:
         """Generate explanation from analysis results."""
         if not self._model:
-            logger.info("Using mock explanation (no LLM configured)")
+            logger.info("Using mock explanation (LLM Explanation Engine not configured)")
             return self._get_mock_explanation(analysis_result)
 
         try:
@@ -177,6 +170,7 @@ Important:
                 generation_config=genai.GenerationConfig(
                     max_output_tokens=self.config.max_tokens,
                     temperature=self.config.temperature,
+                    response_mime_type="application/json"
                 )
             )
 
@@ -199,6 +193,7 @@ Important:
                 generation_config=genai.GenerationConfig(
                     max_output_tokens=self.config.max_tokens,
                     temperature=self.config.temperature,
+                    response_mime_type="application/json"
                 )
             )
 

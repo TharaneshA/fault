@@ -1,12 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
+import sys
+sys.setrecursionlimit(5000)
+
 
 
 a = Analysis(
     ['C:\\project\\fault\\backend\\run_server.py'],
     pathex=[],
     binaries=[],
-    datas=[('C:\\project\\fault\\backend\\main.py', '.'), ('C:\\project\\fault\\backend\\config.py', '.'), ('C:\\project\\fault\\backend\\api', 'api'), ('C:\\project\\fault\\backend\\data', 'data'), ('C:\\project\\fault\\backend\\ingd', 'ingd'), ('C:\\project\\fault\\backend\\weights', 'weights')],
-    hiddenimports=['uvicorn.logging', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.websockets', 'uvicorn.protocols.websockets.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'uvicorn.lifespan.off', 'fastapi', 'pydantic', 'torch', 'numpy', 'pandas', 'networkx', 'scipy', 'sklearn', 'loguru'],
+    datas=[('C:\\project\\fault\\backend\\main.py', '.'), ('C:\\project\\fault\\backend\\config.py', '.'), ('C:\\project\\fault\\backend\\api', 'api'), ('C:\\project\\fault\\backend\\ccre', 'ccre'), ('C:\\project\\fault\\backend\\data', 'data'), ('C:\\project\\fault\\backend\\ingd', 'ingd'), ('C:\\project\\fault\\backend\\.env', '.'), ('C:\\project\\fault\\backend\\weights', 'weights')],
+    hiddenimports=['uvicorn.logging', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.websockets', 'uvicorn.protocols.websockets.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'uvicorn.lifespan.off', 'fastapi', 'pydantic', 'torch', 'numpy', 'pandas', 'networkx', 'scipy', 'sklearn', 'loguru', 'google.generativeai'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

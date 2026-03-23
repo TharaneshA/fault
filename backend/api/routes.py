@@ -25,12 +25,29 @@ from config import INGDConfig, DATA_DIR, CCREConfig
 from ccre import CCREExplainer
 
 
+class ExplainRequest(BaseModel):
+    """Request body for explanation endpoint."""
+    use_latest: bool = Field(default=True, description="Use latest analysis result")
+    analysis_result: Optional[Dict[str, Any]] = Field(default=None, description="Custom analysis result to explain")
+
+
+class ExplainResponse(BaseModel):
+    """Response from explanation endpoint."""
+    success: bool
+    root_cause_summary: str
+    failure_chain: List[str]
+    evidence: Dict[str, List[str]]
+    recommendations: List[Dict[str, str]]
+    confidence_breakdown: Dict[str, float]
+
+
 router = APIRouter(prefix="/api/v1", tags=["ingd"])
 
 # Global pipeline instance (lazy loaded)
 _pipeline: Optional[INGDPipeline] = None
 _current_result: Optional[INGDResult] = None
 _ccre_explainer: Optional[CCREExplainer] = None
+_current_explanation: Optional[ExplainResponse] = None
 
 
 def get_ccre_explainer() -> CCREExplainer:
@@ -86,13 +103,6 @@ class AnalysisResponse(BaseModel):
     metadata: Dict[str, Any]
 
 
-class DatasetInfo(BaseModel):
-    """Information about a dataset."""
-    name: str
-    num_cases: int
-    cases: List[str]
-
-
 class CaseInfo(BaseModel):
     """Information about a specific case."""
     case_id: str
@@ -101,6 +111,13 @@ class CaseInfo(BaseModel):
     metric_names: List[str]
     ground_truth: Optional[str]
     fault_type: Optional[str]
+
+
+class DatasetInfo(BaseModel):
+    """Information about a dataset."""
+    name: str
+    num_cases: int
+    cases: List[str]
 
 
 # Health Check
@@ -114,7 +131,7 @@ async def health_check():
 # Analysis Endpoints
 
 @router.post("/analyze", response_model=AnalysisResponse)
-async def analyze_dataset(request: AnalyzeRequest):
+async def analyze_dataset(request: AnalyzeRequest, background_tasks: BackgroundTasks):
     """
     Run INGD analysis on a benchmark dataset case.
 
@@ -160,8 +177,13 @@ async def analyze_dataset(request: AnalyzeRequest):
         )
 
         _current_result = result
+        
+        # Clear cache and trigger background explanation
+        global _current_explanation
+        _current_explanation = None
+        background_tasks.add_task(generate_explanation_task, result)
+        
         result_dict = result.to_dict()
-
         # Add ground truth to metadata if available
         result_dict["metadata"]["ground_truth"] = dataset.ground_truth
         result_dict["metadata"]["fault_type"] = dataset.fault_type
@@ -182,7 +204,7 @@ async def analyze_dataset(request: AnalyzeRequest):
 
 
 @router.post("/analyze/metrics", response_model=AnalysisResponse)
-async def analyze_metrics(request: AnalyzeMetricsRequest):
+async def analyze_metrics(request: AnalyzeMetricsRequest, background_tasks: BackgroundTasks):
     """
     Run INGD analysis on provided metrics data.
 
@@ -220,6 +242,12 @@ async def analyze_metrics(request: AnalyzeMetricsRequest):
         )
 
         _current_result = result
+        
+        # Clear cache and trigger background explanation
+        global _current_explanation
+        _current_explanation = None
+        background_tasks.add_task(generate_explanation_task, result)
+        
         result_dict = result.to_dict()
 
         return AnalysisResponse(
@@ -237,6 +265,7 @@ async def analyze_metrics(request: AnalyzeMetricsRequest):
 
 @router.post("/analyze/upload")
 async def analyze_upload(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     top_k: int = 5,
     timestamp_col: Optional[str] = None
@@ -285,6 +314,11 @@ async def analyze_upload(
         )
 
         _current_result = result
+
+        # Clear cache and trigger background explanation
+        global _current_explanation
+        _current_explanation = None
+        background_tasks.add_task(generate_explanation_task, result)
 
         return JSONResponse(content={
             "success": True,
@@ -420,20 +454,27 @@ async def reset_model():
 
 # CCRE Explanation Endpoints
 
-class ExplainRequest(BaseModel):
-    """Request body for explanation endpoint."""
-    use_latest: bool = Field(default=True, description="Use latest analysis result")
-    analysis_result: Optional[Dict[str, Any]] = Field(default=None, description="Custom analysis result to explain")
 
-
-class ExplainResponse(BaseModel):
-    """Response from explanation endpoint."""
-    success: bool
-    root_cause_summary: str
-    failure_chain: List[str]
-    evidence: Dict[str, List[str]]
-    recommendations: List[Dict[str, str]]
-    confidence_breakdown: Dict[str, float]
+async def generate_explanation_task(result: INGDResult):
+    """Background task to generate explanation."""
+    global _current_explanation
+    try:
+        logger.info("Background Step: Generating LLM explanation for the latest result...")
+        explainer = get_ccre_explainer()
+        analysis_data = result.to_dict()
+        exp_result = await explainer.explain(analysis_data)
+        
+        _current_explanation = ExplainResponse(
+            success=True,
+            root_cause_summary=exp_result.root_cause_summary,
+            failure_chain=exp_result.failure_chain,
+            evidence=exp_result.evidence,
+            recommendations=exp_result.recommendations,
+            confidence_breakdown=exp_result.confidence_breakdown
+        )
+        logger.info("Background Step: LLM explanation generated and cached.")
+    except Exception as e:
+        logger.error(f"Background explanation failed: {e}")
 
 
 @router.post("/explain", response_model=ExplainResponse)
@@ -450,22 +491,33 @@ async def explain_analysis(request: ExplainRequest):
     Returns:
         ExplainResponse with explanation details
     """
+    global _current_explanation
+    logger.info(f"Received explanation request. Memory check: _current_explanation is {type(_current_explanation)}")
+    
     try:
         # Get analysis result
         if request.use_latest:
+            if _current_explanation:
+                logger.info("Using cached LLM explanation.")
+                return _current_explanation
+
             if _current_result is None:
+                logger.error("Explanation failed: No analysis result found in memory.")
                 raise HTTPException(status_code=404, detail="No analysis has been run yet. Run /analyze first.")
+            
             analysis_data = _current_result.to_dict()
+            logger.info(f"Generating live explanation for: {analysis_data.get('metadata', {}).get('case_id', 'unknown')}")
         elif request.analysis_result:
             analysis_data = request.analysis_result
+            logger.info("Generating explanation for provided analysis data")
         else:
             raise HTTPException(status_code=400, detail="Either use_latest=true or provide analysis_result")
 
-        # Generate explanation
+        # Generate explanation (fallback if cache missing or custom data)
         explainer = get_ccre_explainer()
         result = await explainer.explain(analysis_data)
-
-        return ExplainResponse(
+        
+        response = ExplainResponse(
             success=True,
             root_cause_summary=result.root_cause_summary,
             failure_chain=result.failure_chain,
@@ -473,6 +525,12 @@ async def explain_analysis(request: ExplainRequest):
             recommendations=result.recommendations,
             confidence_breakdown=result.confidence_breakdown
         )
+        
+        # Cache it if it's the latest
+        if request.use_latest:
+            _current_explanation = response
+
+        return response
 
     except HTTPException:
         raise

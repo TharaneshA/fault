@@ -11,8 +11,17 @@ Usage:
 import subprocess
 import sys
 import platform
+import os
 import shutil
 from pathlib import Path
+
+# Increase recursion depth for heavy AI libraries
+import sys
+sys.setrecursionlimit(5000)
+
+# Increase recursion depth for heavy AI libraries
+import sys
+sys.setrecursionlimit(5000)
 
 BACKEND_DIR = Path(__file__).parent
 PROJECT_ROOT = BACKEND_DIR.parent
