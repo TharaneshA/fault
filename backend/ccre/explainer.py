@@ -32,6 +32,7 @@ class CCREExplainer:
     def __init__(self, config: Optional[CCREConfig] = None):
         self.config = config or CCREConfig()
         self._model = None
+        self.last_raw_response = None  # Added for debugging
 
         if GEMINI_AVAILABLE:
             api_key = os.environ.get("GEMINI_API_KEY")
@@ -107,14 +108,21 @@ Important:
 
     def _parse_response(self, response_text: str) -> ExplanationResult:
         """Parse LLM response into structured format."""
+        import re
+        self.last_raw_response = response_text # Store raw response for debugging
         try:
-            # Clean up response - remove markdown code blocks if present
-            cleaned = response_text.strip()
-            if cleaned.startswith("```"):
-                lines = cleaned.split("\n")
-                # Remove first and last lines (```json and ```)
-                lines = [l for l in lines if not l.strip().startswith("```")]
-                cleaned = "\n".join(lines)
+            # Clean up response - search for the JSON object within the text
+            # This is more robust than startswith("```")
+            match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if match:
+                cleaned = match.group(0)
+            else:
+                cleaned = response_text.strip()
+                # Still try markdown cleanup as fallback
+                if cleaned.startswith("```"):
+                    lines = cleaned.split("\n")
+                    lines = [l for l in lines if not l.strip().startswith("```")]
+                    cleaned = "\n".join(lines)
 
             data = json.loads(cleaned)
             return ExplanationResult(**data)

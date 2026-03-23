@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from pydantic import BaseModel
 from typing import Optional
+from dotenv import load_dotenv
 
 # Base paths - handle PyInstaller frozen apps
 if getattr(sys, 'frozen', False):
@@ -13,6 +14,9 @@ if getattr(sys, 'frozen', False):
 else:
     # Running as script
     BACKEND_DIR = Path(__file__).parent
+
+# Load environment variables from .env file
+load_dotenv(BACKEND_DIR / ".env")
 
 WEIGHTS_DIR = BACKEND_DIR / "weights"
 DATA_DIR = BACKEND_DIR / "data"
@@ -64,7 +68,7 @@ class RootCauseScorerConfig(BaseModel):
 class CCREConfig(BaseModel):
     """Configuration for CCRE (Causal Chain Reasoning Explanation)."""
     model: str = "gemini-2.5-flash"  # Gemini 2.5 Flash model
-    max_tokens: int = 1024
+    max_tokens: int = 4096
     temperature: float = 0.3  # Lower for more consistent explanations
 
 

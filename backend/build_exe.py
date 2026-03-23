@@ -108,6 +108,7 @@ def build():
         "--add-data", f"{BACKEND_DIR / 'ccre'}{sep}ccre",
         "--add-data", f"{BACKEND_DIR / 'data'}{sep}data",
         "--add-data", f"{BACKEND_DIR / 'ingd'}{sep}ingd",
+        "--add-data", f"{BACKEND_DIR / '.env'}{sep}.",
         # Add pretrained weights
         "--add-data", f"{BACKEND_DIR / 'weights'}{sep}weights",
         str(BACKEND_DIR / "run_server.py"),  # Entry point
