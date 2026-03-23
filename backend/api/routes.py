@@ -21,7 +21,8 @@ from ingd import INGDPipeline
 from ingd.pipeline import INGDResult
 from data import DataLoader, DataPreprocessor
 from data.loader import generate_synthetic_data, BenchmarkDataset
-from config import INGDConfig, DATA_DIR
+from config import INGDConfig, DATA_DIR, CCREConfig
+from ccre import CCREExplainer
 
 
 router = APIRouter(prefix="/api/v1", tags=["ingd"])
@@ -29,6 +30,15 @@ router = APIRouter(prefix="/api/v1", tags=["ingd"])
 # Global pipeline instance (lazy loaded)
 _pipeline: Optional[INGDPipeline] = None
 _current_result: Optional[INGDResult] = None
+_ccre_explainer: Optional[CCREExplainer] = None
+
+
+def get_ccre_explainer() -> CCREExplainer:
+    """Get or create CCRE explainer instance."""
+    global _ccre_explainer
+    if _ccre_explainer is None:
+        _ccre_explainer = CCREExplainer()
+    return _ccre_explainer
 
 
 def get_pipeline() -> INGDPipeline:
@@ -406,3 +416,66 @@ async def reset_model():
     _current_result = None
 
     return {"status": "reset", "message": "Pipeline and results cleared"}
+
+
+# CCRE Explanation Endpoints
+
+class ExplainRequest(BaseModel):
+    """Request body for explanation endpoint."""
+    use_latest: bool = Field(default=True, description="Use latest analysis result")
+    analysis_result: Optional[Dict[str, Any]] = Field(default=None, description="Custom analysis result to explain")
+
+
+class ExplainResponse(BaseModel):
+    """Response from explanation endpoint."""
+    success: bool
+    root_cause_summary: str
+    failure_chain: List[str]
+    evidence: Dict[str, List[str]]
+    recommendations: List[Dict[str, str]]
+    confidence_breakdown: Dict[str, float]
+
+
+@router.post("/explain", response_model=ExplainResponse)
+async def explain_analysis(request: ExplainRequest):
+    """
+    Generate LLM explanation for analysis results.
+
+    Uses CCRE (Causal Chain Reasoning Explanation) to generate
+    a natural language explanation of the root cause analysis.
+
+    Args:
+        request: ExplainRequest with analysis data
+
+    Returns:
+        ExplainResponse with explanation details
+    """
+    try:
+        # Get analysis result
+        if request.use_latest:
+            if _current_result is None:
+                raise HTTPException(status_code=404, detail="No analysis has been run yet. Run /analyze first.")
+            analysis_data = _current_result.to_dict()
+        elif request.analysis_result:
+            analysis_data = request.analysis_result
+        else:
+            raise HTTPException(status_code=400, detail="Either use_latest=true or provide analysis_result")
+
+        # Generate explanation
+        explainer = get_ccre_explainer()
+        result = await explainer.explain(analysis_data)
+
+        return ExplainResponse(
+            success=True,
+            root_cause_summary=result.root_cause_summary,
+            failure_chain=result.failure_chain,
+            evidence=result.evidence,
+            recommendations=result.recommendations,
+            confidence_breakdown=result.confidence_breakdown
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Explanation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

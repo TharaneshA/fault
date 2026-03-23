@@ -100,10 +100,12 @@ def build():
         "--hidden-import", "scipy",
         "--hidden-import", "sklearn",
         "--hidden-import", "loguru",
+        "--hidden-import", "google.generativeai",
         # Add all backend source files (separator is OS-dependent)
         "--add-data", f"{BACKEND_DIR / 'main.py'}{sep}.",
         "--add-data", f"{BACKEND_DIR / 'config.py'}{sep}.",
         "--add-data", f"{BACKEND_DIR / 'api'}{sep}api",
+        "--add-data", f"{BACKEND_DIR / 'ccre'}{sep}ccre",
         "--add-data", f"{BACKEND_DIR / 'data'}{sep}data",
         "--add-data", f"{BACKEND_DIR / 'ingd'}{sep}ingd",
         # Add pretrained weights

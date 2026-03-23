@@ -106,6 +106,26 @@ export interface HealthStatus {
   service: string;
 }
 
+export interface ExplanationResult {
+  success: boolean;
+  root_cause_summary: string;
+  failure_chain: string[];
+  evidence: {
+    metrics: string[];
+    traces: string[];
+    logs: string[];
+  };
+  recommendations: Array<{
+    priority: string;
+    text: string;
+  }>;
+  confidence_breakdown: {
+    cmea: number;
+    ingd: number;
+    ccre: number;
+  };
+}
+
 // API Error class
 export class APIError extends Error {
   constructor(
@@ -262,6 +282,18 @@ export async function getModelStatus(): Promise<{
  */
 export async function resetModel(): Promise<{ status: string; message: string }> {
   return apiFetch("/model/reset", { method: "POST" });
+}
+
+/**
+ * Generate CCRE explanation from latest analysis
+ */
+export async function getExplanation(useLatest: boolean = true): Promise<ExplanationResult> {
+  return apiFetch<ExplanationResult>("/explain", {
+    method: "POST",
+    body: JSON.stringify({
+      use_latest: useLatest,
+    }),
+  });
 }
 
 // Polling helper for backend readiness

@@ -61,6 +61,13 @@ class RootCauseScorerConfig(BaseModel):
     cascade_weight: float = 0.3  # Weight for cascade impact
 
 
+class CCREConfig(BaseModel):
+    """Configuration for CCRE (Causal Chain Reasoning Explanation)."""
+    model: str = "gemini-2.5-flash"  # Gemini 2.5 Flash model
+    max_tokens: int = 1024
+    temperature: float = 0.3  # Lower for more consistent explanations
+
+
 class INGDConfig(BaseModel):
     """Main INGD configuration combining all sub-configs."""
     neural_granger: NeuralGrangerConfig = NeuralGrangerConfig()

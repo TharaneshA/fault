@@ -378,7 +378,7 @@ export default function AnalysisPage() {
         )}
         {activeTab === "explanation" && (
           <div className="p-6">
-            <ExplanationView />
+            <ExplanationView analysisReady={!!liveResult} />
           </div>
         )}
       </div>

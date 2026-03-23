@@ -1,6 +1,79 @@
-import { Brain, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Brain, CheckCircle2, AlertTriangle, Lightbulb, Loader2, AlertCircle } from "lucide-react"
+import { getExplanation, ExplanationResult } from "@/lib/api"
 
-export function ExplanationView() {
+interface ExplanationViewProps {
+  analysisReady?: boolean
+}
+
+export function ExplanationView({ analysisReady = false }: ExplanationViewProps) {
+  const [explanation, setExplanation] = useState<ExplanationResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (analysisReady) {
+      fetchExplanation()
+    }
+  }, [analysisReady])
+
+  const fetchExplanation = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await getExplanation(true)
+      setExplanation(result)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate explanation")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-500 mx-auto" />
+          <p className="text-[13px] text-app-muted">Generating CCRE explanation...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center space-y-3">
+          <AlertCircle className="h-8 w-8 text-red-500 mx-auto" />
+          <p className="text-[13px] text-red-400">{error}</p>
+          <button
+            onClick={fetchExplanation}
+            className="text-[12px] text-purple-400 hover:text-purple-300 underline"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Not ready state
+  if (!analysisReady || !explanation) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center space-y-3">
+          <Brain className="h-8 w-8 text-app-muted mx-auto" />
+          <p className="text-[13px] text-app-muted">Run analysis first to generate explanation</p>
+        </div>
+      </div>
+    )
+  }
+
+  const { root_cause_summary, failure_chain, evidence, recommendations, confidence_breakdown } = explanation
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* LLM-Generated Explanation */}
@@ -14,7 +87,7 @@ export function ExplanationView() {
             </span>
           </div>
           <p className="text-[11px] text-app-muted mt-0.5">
-            Causal Chain Reasoning Explanation powered by GPT-4
+            Causal Chain Reasoning Explanation powered by Gemini
           </p>
         </div>
         <div className="p-4 space-y-4">
@@ -25,9 +98,7 @@ export function ExplanationView() {
                 Root Cause Identification
               </h4>
               <p className="text-[12px] text-app-secondary leading-relaxed">
-                The primary root cause of this failure is <span className="font-mono text-app">ts-order-service</span> experiencing
-                a <strong className="text-orange-500">CPU stress event</strong>. Analysis of metrics shows CPU utilization spiking to 98.7%
-                at 14:32:05, coinciding with increased request latency and thread contention.
+                {root_cause_summary}
               </p>
             </div>
 
@@ -38,25 +109,10 @@ export function ExplanationView() {
                 <AlertTriangle className="h-4 w-4 mr-2 text-yellow-500" />
                 Failure Propagation Chain
               </h4>
-              <p className="text-[12px] text-app-secondary leading-relaxed">
-                The failure propagated through the service dependency chain as follows:
-              </p>
               <ol className="text-[12px] text-app-secondary mt-2 space-y-2 list-decimal list-inside">
-                <li>
-                  <span className="font-mono text-app">ts-order-service</span> CPU saturation caused request processing delays
-                </li>
-                <li>
-                  Downstream calls to <span className="font-mono text-app">ts-config-service</span> timed out,
-                  exhausting its connection pool
-                </li>
-                <li>
-                  <span className="font-mono text-app">ts-travel-service</span> experienced cascading timeouts
-                  due to blocked upstream dependencies
-                </li>
-                <li>
-                  <span className="font-mono text-app">ts-gateway</span> circuit breaker activated after
-                  detecting repeated failures
-                </li>
+                {failure_chain.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
               </ol>
             </div>
 
@@ -71,25 +127,25 @@ export function ExplanationView() {
                 <div className="rounded-md border border-app bg-app-surface p-3">
                   <div className="text-[10px] text-app-muted mb-1">Metrics</div>
                   <ul className="text-[12px] text-app-secondary space-y-1">
-                    <li>• CPU: 98.7% peak</li>
-                    <li>• Latency: +340%</li>
-                    <li>• Error rate: 12.5%</li>
+                    {evidence.metrics.map((item, i) => (
+                      <li key={i}>• {item}</li>
+                    ))}
                   </ul>
                 </div>
                 <div className="rounded-md border border-app bg-app-surface p-3">
                   <div className="text-[10px] text-app-muted mb-1">Traces</div>
                   <ul className="text-[12px] text-app-secondary space-y-1">
-                    <li>• Anomaly score: 0.89</li>
-                    <li>• Timeout count: 47</li>
-                    <li>• Retry storm detected</li>
+                    {evidence.traces.map((item, i) => (
+                      <li key={i}>• {item}</li>
+                    ))}
                   </ul>
                 </div>
                 <div className="rounded-md border border-app bg-app-surface p-3">
                   <div className="text-[10px] text-app-muted mb-1">Logs</div>
                   <ul className="text-[12px] text-app-secondary space-y-1">
-                    <li>• 127 errors in 30s</li>
-                    <li>• GC pause: 1.2s</li>
-                    <li>• Pool exhaustion</li>
+                    {evidence.logs.map((item, i) => (
+                      <li key={i}>• {item}</li>
+                    ))}
                   </ul>
                 </div>
               </div>
@@ -110,28 +166,28 @@ export function ExplanationView() {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-[12px] text-app-secondary">CMEA (Metrics)</span>
-              <span className="text-[12px] font-medium text-app">42%</span>
+              <span className="text-[12px] font-medium text-app">{Math.round(confidence_breakdown.cmea * 100)}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-app-tertiary overflow-hidden">
-              <div className="h-full w-[42%] bg-blue-500 rounded-full" />
+              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${confidence_breakdown.cmea * 100}%` }} />
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-[12px] text-app-secondary">INGD (Traces)</span>
-              <span className="text-[12px] font-medium text-app">35%</span>
+              <span className="text-[12px] font-medium text-app">{Math.round(confidence_breakdown.ingd * 100)}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-app-tertiary overflow-hidden">
-              <div className="h-full w-[35%] bg-emerald-500 rounded-full" />
+              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${confidence_breakdown.ingd * 100}%` }} />
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <span className="text-[12px] text-app-secondary">CCRE (Logs + LLM)</span>
-              <span className="text-[12px] font-medium text-app">23%</span>
+              <span className="text-[12px] font-medium text-app">{Math.round(confidence_breakdown.ccre * 100)}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-app-tertiary overflow-hidden">
-              <div className="h-full w-[23%] bg-violet-500 rounded-full" />
+              <div className="h-full bg-violet-500 rounded-full" style={{ width: `${confidence_breakdown.ccre * 100}%` }} />
             </div>
           </div>
         </div>
@@ -147,31 +203,15 @@ export function ExplanationView() {
         </div>
         <div className="p-4">
           <ul className="space-y-3 text-[12px]">
-            <li className="flex items-start space-x-2">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-              <span className="text-app-secondary">
-                Implement CPU-based autoscaling for <span className="font-mono text-app">ts-order-service</span> with
-                threshold at 70%
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-              <span className="text-app-secondary">
-                Add request rate limiting to prevent traffic spikes from overwhelming the service
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <div className="h-2 w-2 rounded-full bg-yellow-500 mt-1.5 shrink-0" />
-              <span className="text-app-secondary">
-                Review GC settings - consider switching to G1GC with lower pause targets
-              </span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <div className="h-2 w-2 rounded-full bg-yellow-500 mt-1.5 shrink-0" />
-              <span className="text-app-secondary">
-                Increase connection pool size for downstream services to handle burst traffic
-              </span>
-            </li>
+            {recommendations.map((rec, i) => (
+              <li key={i} className="flex items-start space-x-2">
+                <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${
+                  rec.priority === "high" ? "bg-emerald-500" :
+                  rec.priority === "medium" ? "bg-yellow-500" : "bg-gray-500"
+                }`} />
+                <span className="text-app-secondary">{rec.text}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
