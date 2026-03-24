@@ -17,11 +17,7 @@ from pathlib import Path
 
 # Increase recursion depth for heavy AI libraries
 import sys
-sys.setrecursionlimit(5000)
-
-# Increase recursion depth for heavy AI libraries
-import sys
-sys.setrecursionlimit(5000)
+sys.setrecursionlimit(10000)
 
 BACKEND_DIR = Path(__file__).parent
 PROJECT_ROOT = BACKEND_DIR.parent
@@ -80,53 +76,13 @@ def build():
         print("Installing PyInstaller...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
 
-    # PyInstaller command
+    # Use the spec file directly to respect the recursion limit and custom configuration
     cmd = [
         sys.executable, "-m", "PyInstaller",
-        "--onefile",  # Single executable
-        "--name", "fault-backend",
-        "--distpath", str(BACKEND_DIR / "dist"),
-        "--workpath", str(BACKEND_DIR / "build"),
-        "--specpath", str(BACKEND_DIR),
         "--clean",
         "--noconfirm",
-        # Hidden imports that PyInstaller might miss
-        "--hidden-import", "uvicorn.logging",
-        "--hidden-import", "uvicorn.protocols",
-        "--hidden-import", "uvicorn.protocols.http",
-        "--hidden-import", "uvicorn.protocols.http.auto",
-        "--hidden-import", "uvicorn.protocols.websockets",
-        "--hidden-import", "uvicorn.protocols.websockets.auto",
-        "--hidden-import", "uvicorn.lifespan",
-        "--hidden-import", "uvicorn.lifespan.on",
-        "--hidden-import", "uvicorn.lifespan.off",
-        "--hidden-import", "fastapi",
-        "--hidden-import", "pydantic",
-        "--hidden-import", "torch",
-        "--hidden-import", "numpy",
-        "--hidden-import", "pandas",
-        "--hidden-import", "networkx",
-        "--hidden-import", "scipy",
-        "--hidden-import", "sklearn",
-        "--hidden-import", "loguru",
-        "--hidden-import", "google.generativeai",
-        # Add all backend source files (separator is OS-dependent)
-        "--add-data", f"{BACKEND_DIR / 'main.py'}{sep}.",
-        "--add-data", f"{BACKEND_DIR / 'config.py'}{sep}.",
-        "--add-data", f"{BACKEND_DIR / 'api'}{sep}api",
-        "--add-data", f"{BACKEND_DIR / 'ccre'}{sep}ccre",
-        "--add-data", f"{BACKEND_DIR / 'data'}{sep}data",
-        "--add-data", f"{BACKEND_DIR / 'ingd'}{sep}ingd",
-        "--add-data", f"{BACKEND_DIR / '.env'}{sep}.",
-        # Add pretrained weights
-        "--add-data", f"{BACKEND_DIR / 'weights'}{sep}weights",
-        str(BACKEND_DIR / "run_server.py"),  # Entry point
+        str(BACKEND_DIR / "fault-backend.spec")
     ]
-
-    # macOS: disable universal2 to keep the binary smaller
-    if system == "Darwin":
-        cmd.insert(3, "--target-arch")
-        cmd.insert(4, platform.machine())
 
     print(f"\nRunning: {' '.join(cmd)}\n")
 

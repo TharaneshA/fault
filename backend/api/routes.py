@@ -154,11 +154,19 @@ async def analyze_dataset(request: AnalyzeRequest, background_tasks: BackgroundT
         elif request.dataset == "rcaeval":
             dataset = loader.load_rcaeval(request.case_id)
         elif request.dataset == "synthetic":
-            # Generate synthetic data for testing (41 services to match pretrained weights)
+            # Generate diverse synthetic data for LIVE cases to demonstrate different faults
+            case_num = 1
+            if request.case_id.startswith("LIVE-"):
+                try:
+                    case_num = int(request.case_id.split("-")[1])
+                except ValueError:
+                    case_num = 1
+                    
             dataset = generate_synthetic_data(
                 num_services=41,
                 num_timesteps=200,
-                seed=42
+                fault_service=(case_num * 7) % 41, # Vary the root cause service
+                seed=42 + case_num # Unique data per case
             )
         else:
             raise HTTPException(status_code=400, detail=f"Unknown dataset: {request.dataset}")
@@ -173,7 +181,8 @@ async def analyze_dataset(request: AnalyzeRequest, background_tasks: BackgroundT
 
         result = pipeline.analyze(
             data=processed_metrics,
-            metric_names=dataset.metric_names
+            metric_names=dataset.metric_names,
+            case_id=request.case_id
         )
 
         _current_result = result

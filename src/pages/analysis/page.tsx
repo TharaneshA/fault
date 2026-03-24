@@ -95,7 +95,7 @@ export default function AnalysisPage() {
     setLoadError(null)
     const start = performance.now()
 
-    analyzeDataset("synthetic", "default", 5)
+    analyzeDataset("synthetic", caseId || "LIVE-001", 5)
       .then((result) => {
         if (cancelled) return
         setLiveResult(result)

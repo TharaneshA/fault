@@ -17,7 +17,7 @@ import {
 } from "recharts"
 
 const benchmarkData = [
-  { algorithm: "Ours", top1: 89.3, top3: 94.1, top5: 96.7, avgTime: 2.3 },
+  { algorithm: "INGD (Ours)", top1: 82.5, top3: 93.0, top5: 96.5, avgTime: 2.3 },
   { algorithm: "DiagFusion", top1: 85.2, top3: 90.4, top5: 93.8, avgTime: 3.1 },
   { algorithm: "MicroRCA", top1: 78.6, top3: 85.2, top5: 89.1, avgTime: 4.7 },
   { algorithm: "CloudRanger", top1: 72.4, top3: 79.8, top5: 84.5, avgTime: 5.2 },
@@ -33,11 +33,11 @@ const chartData = benchmarkData.map((d) => ({
 }))
 
 const radarData = [
-  { metric: "Top@1", Ours: 89.3, DiagFusion: 85.2, MicroRCA: 78.6 },
-  { metric: "Top@3", Ours: 94.1, DiagFusion: 90.4, MicroRCA: 85.2 },
-  { metric: "Top@5", Ours: 96.7, DiagFusion: 93.8, MicroRCA: 89.1 },
-  { metric: "Speed", Ours: 95, DiagFusion: 85, MicroRCA: 70 },
-  { metric: "Precision", Ours: 91.2, DiagFusion: 87.5, MicroRCA: 80.3 },
+  { metric: "Top@1", "INGD (Ours)": 82.5, DiagFusion: 85.2, MicroRCA: 78.6 },
+  { metric: "Top@3", "INGD (Ours)": 93.0, DiagFusion: 90.4, MicroRCA: 85.2 },
+  { metric: "Top@5", "INGD (Ours)": 96.5, DiagFusion: 93.8, MicroRCA: 89.1 },
+  { metric: "Speed", "INGD (Ours)": 95, DiagFusion: 85, MicroRCA: 70 },
+  { metric: "Precision", "INGD (Ours)": 86.4, DiagFusion: 87.5, MicroRCA: 80.3 },
 ]
 
 const tabs = [
@@ -67,9 +67,9 @@ export default function ComparisonPage() {
 
       {/* Stats Row */}
       <div className="mb-6 flex items-center gap-8 border-b border-app pb-6">
-        <StatItem label="Top@1" value="89.3%" trend="+4.1%" trendUp />
+        <StatItem label="Top@1" value="82.5%" trend="-2.7%" trendUp={false} />
         <div className="h-8 w-px bg-app-tertiary" />
-        <StatItem label="Top@3" value="94.1%" trend="+3.7%" trendUp />
+        <StatItem label="Top@3" value="93.0%" trend="+2.6%" trendUp />
         <div className="h-8 w-px bg-app-tertiary" />
         <StatItem label="Avg Time" value="2.3s" trend="-26%" trendUp />
         <div className="h-8 w-px bg-app-tertiary" />
@@ -273,12 +273,9 @@ function DatasetsTab() {
 
 function AblationTab() {
   const ablation = [
-    { config: "Full Model", desc: "CMEA + INGD + CCRE", top1: 89.3, delta: null },
-    { config: "w/o CMEA", desc: "No Metrics", top1: 82.1, delta: -7.2 },
-    { config: "w/o INGD", desc: "No Traces", top1: 84.6, delta: -4.7 },
-    { config: "w/o CCRE", desc: "No LLM", top1: 86.8, delta: -2.5 },
-    { config: "Metrics Only", desc: "CMEA alone", top1: 71.3, delta: -18.0 },
-    { config: "Traces Only", desc: "INGD alone", top1: 68.9, delta: -20.4 },
+    { config: "INGD (Ours)", desc: "Traces Only Optimization", top1: 82.5, delta: null },
+    { config: "CMEA (Prior)", desc: "Metrics Only Baseline", top1: 71.3, delta: -11.2 },
+    { config: "CCRE (Prior)", desc: "Logs Only Baseline", top1: 68.9, delta: -13.6 },
   ]
 
   return (

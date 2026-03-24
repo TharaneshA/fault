@@ -221,7 +221,6 @@ function buildBackendGraph(
       return { nodes: [], edges: [] }
     }
 
-    // Layout: distribute columns across width, root at top, children below
     const PADDING = 80
     const usableW = W - PADDING * 2
     const colWidth = usableW / columns.length
@@ -233,22 +232,33 @@ function buildBackendGraph(
     const nodes: Node[] = []
     const allEdges: typeof validEdges = []
 
-    columns.forEach((col, colIdx) => {
-      const colCenterX = PADDING + colIdx * colWidth + colWidth / 2 - NODE_W / 2
+    // Helper for deterministic pseudo-random visual variance
+    const getJitter = (id: number, amplitude: number) => {
+      const hash = Math.sin(id * 123.456) * 10000;
+      return (hash - Math.floor(hash) - 0.5) * amplitude;
+    }
 
-      // Root cause at top-center of its column
+    columns.forEach((col, colIdx) => {
+      const rootJitterX = getJitter(col.rootId, 60)
+      const rootJitterY = getJitter(col.rootId, 30)
+      const colCenterX = PADDING + colIdx * colWidth + colWidth / 2 - NODE_W / 2 + rootJitterX
+
+      // Root cause at top-center of its column (with organic jitter)
       nodes.push({
         id: String(col.rootId),
         type: "service",
-        position: { x: colCenterX, y: ROOT_Y },
+        position: { x: colCenterX, y: ROOT_Y + rootJitterY },
         data: { label: col.rootName, isRootCause: true, confidence: col.confidence },
       })
 
       // Children spread evenly within the column
       const childSpacing = colWidth / (col.children.length + 1)
       col.children.forEach((childId, childIdx) => {
-        const childX = PADDING + colIdx * colWidth + childSpacing * (childIdx + 1) - NODE_W / 2
-        const childY = CHILD_Y_START + (childIdx % 2) * CHILD_Y_STAGGER
+        const childJitterX = getJitter(childId, 45)
+        const childJitterY = getJitter(childId + col.rootId, 60)
+
+        const childX = PADDING + colIdx * colWidth + childSpacing * (childIdx + 1) - NODE_W / 2 + childJitterX
+        const childY = CHILD_Y_START + (childIdx % 2) * CHILD_Y_STAGGER + childJitterY
         const name = nodeNameById.get(childId) || `node-${childId}`
         nodes.push({
           id: String(childId),
