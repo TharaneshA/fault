@@ -63,7 +63,7 @@ export default function DashboardPage() {
         <div className="h-8 w-px bg-app-tertiary" />
         <StatItem label="Analyzed" value="264" trend="+12" trendUp />
         <div className="h-8 w-px bg-app-tertiary" />
-        <StatItem label="Top@1 Accuracy" value="89.3%" trend="+4.1%" trendUp />
+        <StatItem label="Top@1 Accuracy" value="82.5%" trend="+4.1%" trendUp />
         <div className="h-8 w-px bg-app-tertiary" />
         <StatItem label="Avg. Time" value="2.3s" trend="-0.8s" trendUp />
       </div>

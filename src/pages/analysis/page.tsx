@@ -95,7 +95,7 @@ export default function AnalysisPage() {
     setLoadError(null)
     const start = performance.now()
 
-    analyzeDataset("synthetic", caseId || "LIVE-001", 5)
+    analyzeDataset("synthetic", "default", 5)
       .then((result) => {
         if (cancelled) return
         setLiveResult(result)
@@ -512,7 +512,7 @@ function OverviewContent({ data }: { data: typeof analysisData }) {
             <div className="flex items-center gap-2">
               <span className="h-1 w-1 rounded-full bg-violet-500" />
               <span className="text-app-secondary">Trace anomaly score:</span>
-              <span className="font-medium text-violet-500">0.89</span>
+              <span className="font-medium text-violet-500">0.825</span>
             </div>
           </div>
         </div>
@@ -832,8 +832,8 @@ function AffectedServicesPanel({
                         <div className={cn(
                           "text-[14px] font-semibold capitalize",
                           service.status === "critical" ? "text-red-500" :
-                          service.status === "error" ? "text-orange-500" :
-                          service.status === "warning" ? "text-yellow-500" : "text-blue-500"
+                            service.status === "error" ? "text-orange-500" :
+                              service.status === "warning" ? "text-yellow-500" : "text-blue-500"
                         )}>
                           {service.status}
                         </div>

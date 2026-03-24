@@ -185,7 +185,7 @@ export default function CasesPage() {
           <span className="font-medium text-app">4</span> pending
         </span>
         <span className="text-app-muted">
-          <span className="font-medium text-app">89.3%</span> avg confidence
+          <span className="font-medium text-app">82.5%</span> avg confidence
         </span>
       </div>
 
